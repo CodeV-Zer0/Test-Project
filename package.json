@@ -1,0 +1,27 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "description": "Node/Express app for plant management hosted on Render",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeV-Zer0/Test-Project.git"
+  },
+  "keywords": ["express","sqlite3","multer","render"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CodeV-Zer0/Test-Project/issues"
+  },
+  "homepage": "https://github.com/CodeV-Zer0/Test-Project#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}
