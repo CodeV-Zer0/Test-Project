@@ -1,0 +1,686 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Primrose Path — Admin Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f5;min-height:100vh}
+.header{background:#1a3d2b;color:white;display:flex;justify-content:space-between;align-items:center;padding:14px 24px}
+.header h1{font-size:1.2rem}
+.logout-btn{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs{display:flex;background:white;border-bottom:2px solid #e0e0e0;padding:0 24px}
+.tab{padding:14px 20px;cursor:pointer;font-size:14px;font-weight:500;color:#666;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab:hover{color:#2d6a4f}
+.tab.active{color:#2d6a4f;border-bottom-color:#2d6a4f}
+.section{display:none;padding:24px;max-width:1100px;margin:auto}
+.section.active{display:block}
+.card{background:white;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.card h2{font-size:1rem;color:#1a3d2b;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eee}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:Arial;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2d6a4f}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-actions{margin-top:16px;display:flex;gap:10px}
+.btn-save{background:#2d6a4f;color:white;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px}
+.btn-save:hover{background:#1a3d2b}
+.btn-clear{background:white;color:#555;border:1px solid #ddd;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px}
+.btn-edit{background:#f39c12;color:white;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px}
+.btn-delete{background:#c0392b;color:white;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px}
+.btn-qr{background:#1a3d2b;color:white;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;background:#f8f9fa;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:2px solid #eee}
+td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#f9fffe}
+tr:last-child td{border-bottom:none}
+.badge-stock{background:#d8f3dc;color:#2d6a4f;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.badge-sold{background:#fee;color:#c0392b;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.stars{color:#f4b400}
+.empty-msg{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid #eee}
+.thumb-placeholder{width:52px;height:52px;background:#f0faf2;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px dashed #d4e6d6}
+.zoomable{cursor:zoom-in}
+.image-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);padding:20px;z-index:9999}
+.image-modal figure{position:relative;max-width:100%;max-height:100%}
+.image-modal img{width:auto;max-width:100%;max-height:80vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.image-modal figcaption{color:#fff;text-align:center;margin-top:12px;font-size:14px;}
+.image-modal button{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer}
+/* Photo upload */
+.upload-zone{border:2px dashed #2d6a4f;border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:#f9fffe;transition:background 0.2s;position:relative}
+.upload-zone:hover{background:#f0faf2}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone p{font-size:14px;color:#2d6a4f;margin-top:6px}
+.upload-zone small{font-size:11px;color:#aaa}
+.photo-preview-wrap{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.preview-img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
+/* Gallery grid in admin */
+.gallery-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px}
+.gallery-admin-item{background:#f9fffe;border:1px solid #d4e6d6;border-radius:10px;overflow:hidden}
+.gallery-admin-item img{width:100%;height:150px;object-fit:cover;display:block}
+.gallery-admin-item-body{padding:10px}
+.gallery-admin-item-label{font-size:13px;font-weight:600;color:#1a3d2b;margin-bottom:4px}
+.gallery-admin-item-desc{font-size:11px;color:#888;margin-bottom:8px}
+.gallery-admin-item-actions{display:flex;gap:6px}
+</style>
+</head>
+<body>
+
+<script>
+if(localStorage.getItem("adminLoggedIn")!=="true") window.location.href="/login";
+</script>
+
+<div class="header">
+  <h1>🌿 The Primrose Path — Admin Panel</h1>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('plants')">🌱 Plants</div>
+  <div class="tab" onclick="switchTab('group')">🪴 Group Arrangements</div>
+  <div class="tab" onclick="switchTab('landscapes')">🌿 Landscapes</div>
+  <div class="tab" onclick="switchTab('customers')">🏢 Customers</div>
+  <div class="tab" onclick="switchTab('offers')">🏷️ Offers</div>
+  <div class="tab" onclick="switchTab('reviews')">⭐ Reviews</div>
+</div>
+
+<!-- ===== PLANTS ===== -->
+<div id="section-plants" class="section active">
+  <div class="card">
+    <h2 id="plant-form-title">➕ Add New Plant</h2>
+    <input type="hidden" id="plant-id">
+    <div class="form-grid">
+  <div class="form-group"><label>Plant Name *</label><input id="p-name" placeholder="e.g. Rose"></div>
+  <div class="form-group"><label>Scientific Name</label><input id="p-sci" placeholder="e.g. Rosa indica"></div>
+  <div class="form-group"><label>Price *</label><input id="p-price" placeholder="e.g. 250"></div>
+  
+  <div class="form-group"><label>Watering</label><input id="p-water" placeholder="e.g. Moderate"></div>
+  
+  <div class="form-group"><label>Sunlight</label><input id="p-sun" placeholder="e.g. Shade to indirect light"></div>
+  
+  <div class="form-group"><label>Best Season</label>
+    <select id="p-season">
+      <option value="All year">All year</option>
+      <option value="Summer">Summer</option>
+      <option value="Monsoon">Monsoon</option>
+      <option value="Winter">Winter</option>
+      <option value="Spring">Spring</option>
+    </select>
+  </div>
+  <div class="form-group"><label>Type</label><input id="p-type" placeholder="e.g. Flowering"></div>
+  
+  <div class="form-group"><label>Availability</label>
+    <select id="p-avail">
+      <option value="1">In Stock</option>
+      <option value="0">Out of Stock</option>
+    </select>
+  </div>
+
+  <div class="form-group full">
+    <label>Plant Photo</label>
+    <div class="upload-zone" id="plant-upload-zone">
+      <input type="file" id="p-photo" accept="image/*" onchange="previewPlantPhoto(this)">
+      <div style="font-size:2rem">📷</div>
+      <p>Click to upload plant photo</p>
+      <small>JPG, PNG, WEBP — max 5MB</small>
+    </div>
+    <div class="photo-preview-wrap" id="plant-photo-preview"></div>
+    <p id="plant-current-photo" style="font-size:12px;color:#888;margin-top:6px"></p>
+  </div>
+
+  <div class="form-group full"><label>Care Tips</label><textarea id="p-care" placeholder="Write care instructions..."></textarea></div>
+</div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="savePlant()">💾 Save Plant</button>
+      <button class="btn-clear" onclick="clearPlantForm()">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🌿 All Plants</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Photo</th><th>Name</th><th>Scientific</th><th>Price</th><th>Watering</th><th>Sunlight</th><th>Season</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="plants-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GROUP ARRANGEMENTS ===== -->
+<div id="section-group" class="section">
+  <div class="card">
+    <h2 id="group-form-title">➕ Add New Group Arrangement</h2>
+    <input type="hidden" id="group-id">
+    <div class="form-grid">
+      <div class="form-group full"><label>Label *</label><input id="group-label" placeholder="e.g. Buddha feature grouping"></div>
+      <div class="form-group full"><label>Description</label><input id="group-desc" placeholder="Optional text or image label"></div>
+      <div class="form-group full">
+        <label>Photo *</label>
+        <div class="upload-zone" id="group-upload-zone">
+          <input type="file" id="group-photo" accept="image/*" onchange="previewGalleryPhoto(this,'group')">
+          <div style="font-size:2rem">📷</div>
+          <p>Click to upload group arrangement photo</p>
+          <small>JPG, PNG, WEBP — max 5MB</small>
+        </div>
+        <div class="photo-preview-wrap" id="group-photo-preview"></div>
+        <p id="group-current-photo" style="font-size:12px;color:#888;margin-top:6px"></p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveGalleryItem('group')">💾 Save Group Arrangement</button>
+      <button class="btn-clear" onclick="clearGalleryForm('group')">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🪴 All Group Arrangements</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Photo</th><th>Label</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody id="group-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LANDSCAPES ===== -->
+<div id="section-landscapes" class="section">
+  <div class="card">
+    <h2 id="landscapes-form-title">➕ Add New Landscape Photo</h2>
+    <input type="hidden" id="landscapes-id">
+    <div class="form-grid">
+      <div class="form-group full"><label>Label *</label><input id="landscapes-label" placeholder="e.g. Landscape path"></div>
+      <div class="form-group full"><label>Description</label><input id="landscapes-desc" placeholder="Optional text or image label"></div>
+      <div class="form-group full">
+        <label>Photo *</label>
+        <div class="upload-zone" id="landscapes-upload-zone">
+          <input type="file" id="landscapes-photo" accept="image/*" onchange="previewGalleryPhoto(this,'landscapes')">
+          <div style="font-size:2rem">📷</div>
+          <p>Click to upload landscape photo</p>
+          <small>JPG, PNG, WEBP — max 5MB</small>
+        </div>
+        <div class="photo-preview-wrap" id="landscapes-photo-preview"></div>
+        <p id="landscapes-current-photo" style="font-size:12px;color:#888;margin-top:6px"></p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveGalleryItem('landscapes')">💾 Save Landscape</button>
+      <button class="btn-clear" onclick="clearGalleryForm('landscapes')">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🌿 All Landscapes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Photo</th><th>Label</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody id="landscapes-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CUSTOMERS ===== -->
+<div id="section-customers" class="section">
+  <div class="card">
+    <h2 id="customers-form-title">➕ Add New Customer Logo</h2>
+    <input type="hidden" id="customers-id">
+    <div class="form-grid">
+      <div class="form-group full"><label>Customer / Institution *</label><input id="customers-label" placeholder="e.g. Microsoft"></div>
+      <div class="form-group full"><label>Description</label><input id="customers-desc" placeholder="Optional text or category"></div>
+      <div class="form-group full">
+        <label>Logo / Photo *</label>
+        <div class="upload-zone" id="customers-upload-zone">
+          <input type="file" id="customers-photo" accept="image/*" onchange="previewGalleryPhoto(this,'customers')">
+          <div style="font-size:2rem">📷</div>
+          <p>Click to upload customer logo or photo</p>
+          <small>JPG, PNG, WEBP — max 5MB</small>
+        </div>
+        <div class="photo-preview-wrap" id="customers-photo-preview"></div>
+        <p id="customers-current-photo" style="font-size:12px;color:#888;margin-top:6px"></p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveGalleryItem('customers')">💾 Save Customer</button>
+      <button class="btn-clear" onclick="clearGalleryForm('customers')">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🏢 All Customers</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Logo</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody id="customers-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OFFERS ===== -->
+<div id="section-offers" class="section">
+  <div class="card">
+    <h2 id="offer-form-title">➕ Add New Offer</h2>
+    <input type="hidden" id="offer-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Title *</label><input id="o-title" placeholder="e.g. Buy 2 Get 1 Free"></div>
+      <div class="form-group"><label>Badge Label</label><input id="o-badge" placeholder="e.g. 30% OFF"></div>
+      <div class="form-group"><label>Emoji</label><input id="o-emoji" placeholder="🌿" maxlength="4" style="font-size:20px"></div>
+      <div class="form-group"><label>Validity</label><input id="o-validity" placeholder="e.g. Valid till 30 June 2026"></div>
+      <div class="form-group full"><label>Description</label><textarea id="o-desc" placeholder="Describe the offer..."></textarea></div>
+      <div class="form-group full"><label>WhatsApp Message</label><input id="o-msg" placeholder="e.g. Hi! I want the Buy 2 Get 1 Free offer."></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveOffer()">💾 Save Offer</button>
+      <button class="btn-clear" onclick="clearOfferForm()">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🏷️ All Offers</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Emoji</th><th>Title</th><th>Badge</th><th>Validity</th><th>Actions</th></tr></thead>
+        <tbody id="offers-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REVIEWS ===== -->
+<div id="section-reviews" class="section">
+  <div class="card">
+    <h2>⭐ Customer Reviews</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">Reviews submitted by customers appear here. Delete spam or inappropriate ones.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Location</th><th>Rating</th><th>Review</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="reviews-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = "/api";
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const map={plants:0,group:1,landscapes:2,customers:3,offers:4,reviews:5};
+  document.querySelectorAll('.tab')[map[name]].classList.add('active');
+  document.getElementById('section-'+name).classList.add('active');
+  if(name==='plants') loadPlants();
+  if(name==='group') loadGallery('group');
+  if(name==='landscapes') loadGallery('landscapes');
+  if(name==='customers') loadGallery('customers');
+  if(name==='offers') loadOffers();
+  if(name==='reviews') loadReviews();
+}
+
+// ===== PLANT PHOTO PREVIEW =====
+function previewPlantPhoto(input){
+  const file = input.files[0]; if(!file) return;
+  const preview = document.getElementById('plant-photo-preview');
+  preview.innerHTML = '';
+  const img = document.createElement('img');
+  img.className = 'preview-img';
+  const reader = new FileReader();
+  reader.onload = e => { img.src = e.target.result; };
+  reader.readAsDataURL(file);
+  preview.appendChild(img);
+}
+
+// ===== PLANTS =====
+let allPlants = [];
+
+async function loadPlants(){
+  const res = await fetch(BASE+'/plants');
+  allPlants = await res.json();
+  const tbody = document.getElementById('plants-table');
+
+  const dbRows = allPlants.length
+    ? allPlants.map(p=>`
+    <tr>
+      <td>${p.photo ? `<img src="${p.photo}" class="thumb zoomable">` : `<div class="thumb-placeholder">🌿</div>`}</td>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:#888;font-style:italic">${p.sci||'-'}</td>
+      <td>₹${p.price}</td>
+      <td>${p.water||'-'}</td>
+      <td>${p.sun||'-'}</td>
+      <td>${p.season||'-'}</td>
+      <td><span class="${p.avail?'badge-stock':'badge-sold'}">${p.avail?'In Stock':'Sold Out'}</span></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-qr" onclick="generateQR(${p.id},'${p.name.replace(/'/g,"\\'")}')">QR</button>
+        <button class="btn-edit" onclick="editPlant(${p.id})">Edit</button>
+        <button class="btn-delete" onclick="deletePlant(${p.id})">Delete</button>
+      </td>
+    </tr>`).join('')
+    : '<tr><td colspan="9" class="empty-msg">No custom plants added yet. Add one above!</td></tr>';
+
+  tbody.innerHTML = dbRows;
+}
+
+function editPlant(id){
+  const p = allPlants.find(x=>x.id===id); if(!p) return;
+  document.getElementById('plant-id').value = p.id;
+  document.getElementById('p-name').value = p.name||'';
+  document.getElementById('p-sci').value = p.sci||'';
+  document.getElementById('p-price').value = p.price||'';
+  document.getElementById('p-type').value = p.type||'Flowering';
+  document.getElementById('p-water').value = p.water||'Every 2 days';
+  document.getElementById('p-sun').value = p.sun||'Full sun';
+  document.getElementById('p-season').value = p.season||'All year';
+  document.getElementById('p-care').value = p.care||'';
+  document.getElementById('p-avail').value = p.avail;
+  const currentMsg = document.getElementById('plant-current-photo');
+  const preview = document.getElementById('plant-photo-preview');
+  if(p.photo){
+    currentMsg.textContent = 'Current photo saved. Upload new to replace.';
+    preview.innerHTML = `<img src="${p.photo}" class="preview-img zoomable">`;
+  } else {
+    currentMsg.textContent = 'No photo yet. Upload one below.';
+    preview.innerHTML = '';
+  }
+  document.getElementById('plant-form-title').textContent = '✏️ Editing: '+p.name;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function savePlant(){
+  const id = document.getElementById('plant-id').value;
+  const name = document.getElementById('p-name').value.trim();
+  const price = document.getElementById('p-price').value.trim();
+
+  if(!name || !price){
+    alert('Plant name and price are required.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('sci', document.getElementById('p-sci').value.trim());
+  formData.append('price', price);
+  formData.append('type', document.getElementById('p-type').value.trim());
+  formData.append('water', document.getElementById('p-water').value.trim());
+  formData.append('sun', document.getElementById('p-sun').value.trim());
+  formData.append('season', document.getElementById('p-season').value);
+  formData.append('care', document.getElementById('p-care').value.trim());
+  formData.append('avail', document.getElementById('p-avail').value);
+
+  const photoFile = document.getElementById('p-photo').files[0];
+  if(photoFile) formData.append('photo', photoFile);
+
+  const url = id ? `${BASE}/plants/${id}` : `${BASE}/plants`;
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+
+    if(data.success || res.ok){
+      clearPlantForm();
+      loadPlants();
+      alert(id ? 'Plant updated!' : 'Plant added!');
+    } else {
+      alert('Error saving plant: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) {
+    console.error(e);
+    alert('Failed to save plant. Check console for details.');
+  }
+}
+
+async function deletePlant(id){
+  if(!confirm('Delete this plant?')) return;
+  await fetch(`${BASE}/plants/${id}`,{method:'DELETE'});
+  loadPlants();
+}
+
+function clearPlantForm(){
+  document.getElementById('plant-id').value='';
+  document.getElementById('p-name').value='';
+  document.getElementById('p-sci').value='';
+  document.getElementById('p-price').value='';
+  document.getElementById('p-type').value='';
+  document.getElementById('p-care').value='';
+  document.getElementById('p-avail').value='1';
+  document.getElementById('p-photo').value='';
+  document.getElementById('plant-photo-preview').innerHTML='';
+  document.getElementById('plant-current-photo').textContent='';
+  document.getElementById('plant-form-title').textContent='➕ Add New Plant';
+}
+
+let allGallery = { group: [], landscapes: [], customers: [] };
+
+async function loadGallery(category) {
+  const res = await fetch(`${BASE}/gallery?category=${category}`);
+  const items = await res.json();
+  allGallery[category] = items;
+  renderGallery(category, items);
+}
+
+function renderGallery(category, items) {
+  const tbody = document.getElementById(`${category}-table`);
+  const label = category === 'customers' ? 'customer' : category === 'landscapes' ? 'landscape' : 'group arrangement';
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-msg">No ${label}s yet. Add one above!</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(item => `
+    <tr>
+      <td>${item.photo ? `<img src="${item.photo}" class="thumb zoomable" alt="${item.label||''}">` : `<div class="thumb-placeholder">📷</div>`}</td>
+      <td><strong>${item.label||'Untitled'}</strong></td>
+      <td style="color:#555;font-size:13px">${item.desc||'-'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-edit" onclick="editGallery('${category}',${item.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteGallery('${category}',${item.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+function editGallery(category, id) {
+  const item = allGallery[category].find(x => x.id === id);
+  if (!item) return;
+  document.getElementById(`${category}-id`).value = item.id;
+  document.getElementById(`${category}-label`).value = item.label || '';
+  document.getElementById(`${category}-desc`).value = item.desc || '';
+  const currentMsg = document.getElementById(`${category}-current-photo`);
+  const preview = document.getElementById(`${category}-photo-preview`);
+  if (item.photo) {
+    currentMsg.textContent = 'Current photo is saved. Upload new to replace.';
+    preview.innerHTML = `<img src="${item.photo}" class="preview-img zoomable" alt="${item.label||''}">`;
+  } else {
+    currentMsg.textContent = 'No photo yet. Upload one below.';
+    preview.innerHTML = '';
+  }
+  document.getElementById(`${category}-form-title`).textContent = '✏️ Editing: ' + (item.label || 'Item');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function previewGalleryPhoto(input, category) {
+  const file = input.files[0]; if (!file) return;
+  const preview = document.getElementById(`${category}-photo-preview`);
+  preview.innerHTML = '';
+  const img = document.createElement('img');
+  img.className = 'preview-img zoomable';
+  const reader = new FileReader();
+  reader.onload = e => { img.src = e.target.result; };
+  reader.readAsDataURL(file);
+  preview.appendChild(img);
+}
+
+async function saveGalleryItem(category) {
+  const id = document.getElementById(`${category}-id`).value;
+  const label = document.getElementById(`${category}-label`).value.trim();
+  if (!label) { alert('Label is required.'); return; }
+  const desc = document.getElementById(`${category}-desc`).value.trim();
+  const formData = new FormData();
+  formData.append('category', category);
+  formData.append('label', label);
+  formData.append('desc', desc);
+  const photoFile = document.getElementById(`${category}-photo`).files[0];
+  if (photoFile) formData.append('photo', photoFile);
+  const url = id ? `${BASE}/gallery/${id}` : `${BASE}/gallery`;
+  const method = id ? 'PUT' : 'POST';
+  const res = await fetch(url, { method, body: formData });
+  const data = await res.json();
+  if (data.success || res.ok) {
+    clearGalleryForm(category);
+    loadGallery(category);
+    alert(id ? 'Entry updated!' : 'Entry added!');
+  } else {
+    alert('Error saving item: ' + (data.error || 'Unknown error'));
+  }
+}
+
+async function deleteGallery(category, id) {
+  if (!confirm('Delete this entry?')) return;
+  await fetch(`${BASE}/gallery/${id}`, { method:'DELETE' });
+  loadGallery(category);
+}
+
+function clearGalleryForm(category) {
+  document.getElementById(`${category}-id`).value = '';
+  document.getElementById(`${category}-label`).value = '';
+  document.getElementById(`${category}-desc`).value = '';
+  document.getElementById(`${category}-photo`).value = '';
+  document.getElementById(`${category}-photo-preview`).innerHTML = '';
+  document.getElementById(`${category}-current-photo`).textContent = '';
+  document.getElementById(`${category}-form-title`).textContent =
+    category === 'group' ? '➕ Add New Group Arrangement'
+    : category === 'landscapes' ? '➕ Add New Landscape Photo'
+    : '➕ Add New Customer Logo';
+}
+
+function openImageModal(src, alt) {
+  const modal = document.getElementById('image-modal');
+  if (!modal) return;
+  modal.querySelector('img').src = src;
+  modal.querySelector('img').alt = alt || '';
+  modal.querySelector('figcaption').textContent = alt || '';
+  modal.style.display = 'flex';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('image-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  if (e.target.matches('.zoomable')) {
+    openImageModal(e.target.src, e.target.alt || 'Image');
+  }
+});
+
+// ===== QR CODE =====
+function generateQR(id,name){
+  const url = window.location.origin + '/plant/' + id;
+  const win=window.open('','_blank','width=420,height:560');
+  win.document.write(`<html><head><title>QR - ${name}</title></head>
+    <body style="text-align:center;font-family:Arial;padding:30px">
+      <div style="background:#1a3d2b;color:white;padding:12px;border-radius:10px;margin-bottom:20px">
+        <div style="font-size:13px;opacity:0.7">The Primrose Path</div>
+        <div style="font-size:20px;font-weight:bold;margin-top:4px">${name}</div>
+      </div>
+      <div id="qr" style="display:flex;justify-content:center;margin:20px 0"></div>
+      <p style="font-size:11px;color:#aaa;margin-bottom:20px">Scan to view plant details</p>
+      <button onclick="window.print()" style="padding:10px 28px;background:#2d6a4f;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨️ Print QR</button>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+      <script>new QRCode(document.getElementById('qr'),{text:'${url}',width:220,height:220,colorDark:'#1a3d2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});<\/script>
+    </body></html>`);
+}
+
+// ===== OFFERS =====
+let allOffers=[];
+
+async function loadOffers(){
+  const res=await fetch(BASE+'/offers');
+  allOffers=await res.json();
+  const tbody=document.getElementById('offers-table');
+  if(!allOffers.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-msg">No offers yet.</td></tr>'; return; }
+  tbody.innerHTML=allOffers.map(o=>`
+    <tr>
+      <td style="font-size:1.4rem">${o.emoji||'🌿'}</td>
+      <td><strong>${o.title}</strong><br><span style="font-size:12px;color:#888">${o.desc||''}</span></td>
+      <td><span style="background:#fff3e0;color:#e07b39;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">${o.badge||''}</span></td>
+      <td style="font-size:13px;color:#666">${o.validity||'-'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-edit" onclick="editOffer(${o.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteOffer(${o.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+function editOffer(id){
+  const o=allOffers.find(x=>x.id===id); if(!o) return;
+  document.getElementById('offer-id').value=o.id;
+  document.getElementById('o-title').value=o.title||'';
+  document.getElementById('o-badge').value=o.badge||'';
+  document.getElementById('o-emoji').value=o.emoji||'';
+  document.getElementById('o-validity').value=o.validity||'';
+  document.getElementById('o-desc').value=o.desc||'';
+  document.getElementById('o-msg').value=o.msg||'';
+  document.getElementById('offer-form-title').textContent='✏️ Editing: '+o.title;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function saveOffer(){
+  const id=document.getElementById('offer-id').value;
+  const title=document.getElementById('o-title').value.trim();
+  if(!title){ alert('Offer title is required.'); return; }
+  const offer={title,badge:document.getElementById('o-badge').value,emoji:document.getElementById('o-emoji').value,validity:document.getElementById('o-validity').value,desc:document.getElementById('o-desc').value,msg:document.getElementById('o-msg').value};
+  const url=id?`${BASE}/offers/${id}`:`${BASE}/offers`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(offer)});
+  clearOfferForm(); loadOffers(); alert(id?'Offer updated!':'Offer added!');
+}
+
+async function deleteOffer(id){
+  if(!confirm('Delete this offer?')) return;
+  await fetch(`${BASE}/offers/${id}`,{method:'DELETE'});
+  loadOffers();
+}
+
+function clearOfferForm(){
+  ['offer-id','o-title','o-badge','o-emoji','o-validity','o-desc','o-msg'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('offer-form-title').textContent='➕ Add New Offer';
+}
+
+// ===== REVIEWS =====
+async function loadReviews(){
+  const res=await fetch(BASE+'/reviews');
+  const reviews=await res.json();
+  const tbody=document.getElementById('reviews-table');
+  if(!reviews.length){ tbody.innerHTML='<tr><td colspan="6" class="empty-msg">No reviews yet.</td></tr>'; return; }
+  tbody.innerHTML=reviews.map(r=>`
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.location||'-'}</td>
+      <td class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td>
+      <td style="max-width:300px;font-size:13px;color:#555">${r.text}</td>
+      <td style="font-size:12px;color:#aaa">${r.date||'-'}</td>
+      <td><button class="btn-delete" onclick="deleteReview(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function deleteReview(id){
+  if(!confirm('Delete this review?')) return;
+  await fetch(`${BASE}/reviews/${id}`,{method:'DELETE'});
+  loadReviews();
+}
+
+function logout(){ localStorage.removeItem('adminLoggedIn'); window.location.href='/login'; }
+
+loadPlants();
+</script>
+<div id="image-modal" class="image-modal" onclick="closeImageModal()">
+  <figure>
+    <img src="" alt="" />
+    <figcaption></figcaption>
+    <button onclick="event.stopPropagation();closeImageModal()">✕</button>
+  </figure>
+</div>
+</body>
+</html>
