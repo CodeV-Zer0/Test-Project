@@ -4,13 +4,19 @@
   "description": "Node/Express app for plant management hosted on Render",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "npm rebuild sqlite3 --build-from-source"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CodeV-Zer0/Test-Project.git"
   },
-  "keywords": ["express","sqlite3","multer","render"],
+  "keywords": [
+    "express",
+    "sqlite3",
+    "multer",
+    "render"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -19,9 +25,14 @@
   },
   "homepage": "https://github.com/CodeV-Zer0/Test-Project#readme",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1065.0",
+    "@supabase/supabase-js": "^2.108.1",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "multer": "^2.1.1",
+    "multer-s3": "^3.0.1",
+    "pg": "^8.21.0",
     "sqlite3": "^6.0.1"
   }
 }
