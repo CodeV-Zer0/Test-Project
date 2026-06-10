@@ -1,9 +1,11 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,15 +17,18 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 if (!fs.existsSync("./uploads")) fs.mkdirSync("./uploads");
 
-// Multer config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "./uploads/"),
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + Math.round(Math.random()*1e6) + path.extname(file.originalname))
-});
+// Supabase client (set SUPABASE_URL and SUPABASE_KEY in env)
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
+
+// Multer config - memory storage so we can upload buffers to Supabase
+const storage = multer.memoryStorage();
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => file.mimetype.startsWith("image/") ? cb(null, true) : cb(new Error("Images only"))
+    fileFilter: (req, file, cb) => file.mimetype && file.mimetype.startsWith("image/") ? cb(null, true) : cb(new Error("Images only"))
 });
 
 // DB
@@ -182,51 +187,125 @@ app.get("/api/plants/:id", (req, res) => {
     });
 });
 
-app.post("/api/plants", upload.single("photo"), (req, res) => {
-    const { name, sci, price, type, water, sun, season, care, avail } = req.body;
-    const photo = req.file ? "/uploads/" + req.file.filename : null;
-    db.run(
-        `INSERT INTO plants (name,sci,price,type,water,sun,season,care,avail,photo) VALUES (?,?,?,?,?,?,?,?,?,?)`,
-        [name, sci, price, type, water, sun, season, care, avail, photo],
-        function(err) {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true, id: this.lastID, photo });
+app.post("/api/plants", upload.single("photo"), async (req, res) => {
+    try {
+        const { name, sci, price, type, water, sun, season, care, avail } = req.body;
+        let photo = null;
+        if (req.file) {
+            if (supabase) {
+                const filePath = `plants/${Date.now()}-${Math.round(Math.random()*1e6)}${path.extname(req.file.originalname)}`;
+                const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, req.file.buffer, { contentType: req.file.mimetype });
+                if (error) return res.status(500).json({ error });
+                const urlData = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+                photo = (urlData && (urlData.publicUrl || (urlData.data && urlData.data.publicUrl) || urlData.publicURL)) || null;
+            } else {
+                const filename = Date.now() + "-" + Math.round(Math.random()*1e6) + path.extname(req.file.originalname);
+                const out = path.join(__dirname, 'uploads', filename);
+                fs.writeFileSync(out, req.file.buffer);
+                photo = "/uploads/" + filename;
+            }
         }
-    );
-});
-
-app.put("/api/plants/:id", upload.single("photo"), (req, res) => {
-    const { name, sci, price, type, water, sun, season, care, avail } = req.body;
-    if (req.file) {
-        db.get("SELECT photo FROM plants WHERE id=?", [req.params.id], (err, row) => {
-            if (row && row.photo) { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); }
-            const photo = "/uploads/" + req.file.filename;
-            db.run(`UPDATE plants SET name=?,sci=?,price=?,type=?,water=?,sun=?,season=?,care=?,avail=?,photo=? WHERE id=?`,
-                [name, sci, price, type, water, sun, season, care, avail, photo, req.params.id],
-                function(err) {
-                    if (err) return res.status(500).json(err);
-                    res.json({ success: true, photo });
-                }
-            );
-        });
-    } else {
-        db.run(`UPDATE plants SET name=?,sci=?,price=?,type=?,water=?,sun=?,season=?,care=?,avail=? WHERE id=?`,
-            [name, sci, price, type, water, sun, season, care, avail, req.params.id],
+        db.run(
+            `INSERT INTO plants (name,sci,price,type,water,sun,season,care,avail,photo) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+            [name, sci, price, type, water, sun, season, care, avail, photo],
             function(err) {
                 if (err) return res.status(500).json(err);
-                res.json({ success: true });
+                res.json({ success: true, id: this.lastID, photo });
             }
         );
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put("/api/plants/:id", upload.single("photo"), async (req, res) => {
+    try {
+        const { name, sci, price, type, water, sun, season, care, avail } = req.body;
+        if (req.file) {
+            db.get("SELECT photo FROM plants WHERE id=?", [req.params.id], async (err, row) => {
+                try {
+                    if (row && row.photo && supabase) {
+                        // try to remove previous file from supabase if possible
+                        try {
+                            const parsed = (() => {
+                                try {
+                                    const u = new URL(row.photo);
+                                    const parts = u.pathname.split('/');
+                                    const idx = parts.indexOf('object');
+                                    if (idx !== -1) {
+                                        const bucket = parts[idx+2];
+                                        const filePath = parts.slice(idx+3).join('/');
+                                        return { bucket, filePath };
+                                    }
+                                } catch(e){}
+                                return null;
+                            })();
+                            if (parsed) await supabase.storage.from(parsed.bucket).remove([parsed.filePath]);
+                        } catch(e) { /* ignore */ }
+                    }
+                    let photo = null;
+                    if (supabase) {
+                        const filePath = `plants/${Date.now()}-${Math.round(Math.random()*1e6)}${path.extname(req.file.originalname)}`;
+                        const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, req.file.buffer, { contentType: req.file.mimetype });
+                        if (error) return res.status(500).json({ error });
+                        const urlData = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+                        photo = (urlData && (urlData.publicUrl || (urlData.data && urlData.data.publicUrl) || urlData.publicURL)) || null;
+                    } else {
+                        const filename = Date.now() + "-" + Math.round(Math.random()*1e6) + path.extname(req.file.originalname);
+                        const out = path.join(__dirname, 'uploads', filename);
+                        fs.writeFileSync(out, req.file.buffer);
+                        photo = "/uploads/" + filename;
+                    }
+                    db.run(`UPDATE plants SET name=?,sci=?,price=?,type=?,water=?,sun=?,season=?,care=?,avail=?,photo=? WHERE id=?`,
+                        [name, sci, price, type, water, sun, season, care, avail, photo, req.params.id],
+                        function(err) {
+                            if (err) return res.status(500).json(err);
+                            res.json({ success: true, photo });
+                        }
+                    );
+                } catch(e) { res.status(500).json({ error: e.message }); }
+            });
+        } else {
+            db.run(`UPDATE plants SET name=?,sci=?,price=?,type=?,water=?,sun=?,season=?,care=?,avail=? WHERE id=?`,
+                [name, sci, price, type, water, sun, season, care, avail, req.params.id],
+                function(err) {
+                    if (err) return res.status(500).json(err);
+                    res.json({ success: true });
+                }
+            );
+        }
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.delete("/api/plants/:id", (req, res) => {
-    db.get("SELECT photo FROM plants WHERE id=?", [req.params.id], (err, row) => {
-        if (row && row.photo) { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); }
-        db.run("DELETE FROM plants WHERE id=?", [req.params.id], function(err) {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true });
-        });
+    db.get("SELECT photo FROM plants WHERE id=?", [req.params.id], async (err, row) => {
+        try {
+            if (row && row.photo) {
+                // attempt to delete from Supabase if URL looks like a Supabase storage URL
+                if (supabase) {
+                    try {
+                        const parsed = (() => {
+                            try {
+                                const u = new URL(row.photo);
+                                const parts = u.pathname.split('/');
+                                const idx = parts.indexOf('object');
+                                if (idx !== -1) {
+                                    const bucket = parts[idx+2];
+                                    const filePath = parts.slice(idx+3).join('/');
+                                    return { bucket, filePath };
+                                }
+                            } catch(e){}
+                            return null;
+                        })();
+                        if (parsed) await supabase.storage.from(parsed.bucket).remove([parsed.filePath]);
+                    } catch(e) { /* ignore */ }
+                }
+                // fallback: try removing local file if it exists and looks local
+                try { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); } catch(e){}
+            }
+            db.run("DELETE FROM plants WHERE id=?", [req.params.id], function(err) {
+                if (err) return res.status(500).json(err);
+                res.json({ success: true });
+            });
+        } catch(e) { res.status(500).json({ error: e.message }); }
     });
 });
 
@@ -248,34 +327,79 @@ app.get("/api/gallery/:id", (req, res) => {
     });
 });
 
-app.post("/api/gallery", upload.single("photo"), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "Photo required" });
-    const { category, label, desc } = req.body;
-    const photo = "/uploads/" + req.file.filename;
-    db.run(
-        `INSERT INTO gallery (category,label, "desc", photo) VALUES (?,?,?,?)`,
-        [category || 'group', label || "Gallery Photo", desc || "", photo],
-        function(err) {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true, id: this.lastID, photo });
+app.post("/api/gallery", upload.single("photo"), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "Photo required" });
+        const { category, label, desc } = req.body;
+        let photo = null;
+        if (supabase) {
+            const filePath = `gallery/${Date.now()}-${Math.round(Math.random()*1e6)}${path.extname(req.file.originalname)}`;
+            const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, req.file.buffer, { contentType: req.file.mimetype });
+            if (error) return res.status(500).json({ error });
+            const urlData = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+            photo = (urlData && (urlData.publicUrl || (urlData.data && urlData.data.publicUrl) || urlData.publicURL)) || null;
+        } else {
+            const filename = Date.now() + "-" + Math.round(Math.random()*1e6) + path.extname(req.file.originalname);
+            const out = path.join(__dirname, 'uploads', filename);
+            fs.writeFileSync(out, req.file.buffer);
+            photo = "/uploads/" + filename;
         }
-    );
+        db.run(
+            `INSERT INTO gallery (category,label, "desc", photo) VALUES (?,?,?,?)`,
+            [category || 'group', label || "Gallery Photo", desc || "", photo],
+            function(err) {
+                if (err) return res.status(500).json(err);
+                res.json({ success: true, id: this.lastID, photo });
+            }
+        );
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put("/api/gallery/:id", upload.single("photo"), (req, res) => {
     const { category, label, desc } = req.body;
     const updateFields = [label || "Gallery Photo", desc || "", category || 'group', req.params.id];
     if (req.file) {
-        db.get("SELECT photo FROM gallery WHERE id=?", [req.params.id], (err, row) => {
-            if (row && row.photo) { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); }
-            const photo = "/uploads/" + req.file.filename;
-            db.run(`UPDATE gallery SET label=?,"desc"=?,category=?,photo=? WHERE id=?`,
-                [label || "Gallery Photo", desc || "", category || 'group', photo, req.params.id],
-                function(err) {
-                    if (err) return res.status(500).json(err);
-                    res.json({ success: true, photo });
+        db.get("SELECT photo FROM gallery WHERE id=?", [req.params.id], async (err, row) => {
+            try {
+                if (row && row.photo && supabase) {
+                    try {
+                        const parsed = (() => {
+                            try {
+                                const u = new URL(row.photo);
+                                const parts = u.pathname.split('/');
+                                const idx = parts.indexOf('object');
+                                if (idx !== -1) {
+                                    const bucket = parts[idx+2];
+                                    const filePath = parts.slice(idx+3).join('/');
+                                    return { bucket, filePath };
+                                }
+                            } catch(e){}
+                            return null;
+                        })();
+                        if (parsed) await supabase.storage.from(parsed.bucket).remove([parsed.filePath]);
+                    } catch(e) { /* ignore */ }
                 }
-            );
+                let photo = null;
+                if (supabase) {
+                    const filePath = `gallery/${Date.now()}-${Math.round(Math.random()*1e6)}${path.extname(req.file.originalname)}`;
+                    const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, req.file.buffer, { contentType: req.file.mimetype });
+                    if (error) return res.status(500).json({ error });
+                    const urlData = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+                    photo = (urlData && (urlData.publicUrl || (urlData.data && urlData.data.publicUrl) || urlData.publicURL)) || null;
+                } else {
+                    const filename = Date.now() + "-" + Math.round(Math.random()*1e6) + path.extname(req.file.originalname);
+                    const out = path.join(__dirname, 'uploads', filename);
+                    fs.writeFileSync(out, req.file.buffer);
+                    photo = "/uploads/" + filename;
+                }
+                db.run(`UPDATE gallery SET label=?,"desc"=?,category=?,photo=? WHERE id=?`,
+                    [label || "Gallery Photo", desc || "", category || 'group', photo, req.params.id],
+                    function(err) {
+                        if (err) return res.status(500).json(err);
+                        res.json({ success: true, photo });
+                    }
+                );
+            } catch(e) { res.status(500).json({ error: e.message }); }
         });
     } else {
         db.run(`UPDATE gallery SET label=?,"desc"=?,category=? WHERE id=?`,
@@ -289,12 +413,34 @@ app.put("/api/gallery/:id", upload.single("photo"), (req, res) => {
 });
 
 app.delete("/api/gallery/:id", (req, res) => {
-    db.get("SELECT photo FROM gallery WHERE id=?", [req.params.id], (err, row) => {
-        if (row && row.photo) { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); }
-        db.run("DELETE FROM gallery WHERE id=?", [req.params.id], function(err) {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true });
-        });
+    db.get("SELECT photo FROM gallery WHERE id=?", [req.params.id], async (err, row) => {
+        try {
+            if (row && row.photo) {
+                if (supabase) {
+                    try {
+                        const parsed = (() => {
+                            try {
+                                const u = new URL(row.photo);
+                                const parts = u.pathname.split('/');
+                                const idx = parts.indexOf('object');
+                                if (idx !== -1) {
+                                    const bucket = parts[idx+2];
+                                    const filePath = parts.slice(idx+3).join('/');
+                                    return { bucket, filePath };
+                                }
+                            } catch(e){}
+                            return null;
+                        })();
+                        if (parsed) await supabase.storage.from(parsed.bucket).remove([parsed.filePath]);
+                    } catch(e) { /* ignore */ }
+                }
+                try { const old = "." + row.photo; if (fs.existsSync(old)) fs.unlinkSync(old); } catch(e){}
+            }
+            db.run("DELETE FROM gallery WHERE id=?", [req.params.id], function(err) {
+                if (err) return res.status(500).json(err);
+                res.json({ success: true });
+            });
+        } catch(e) { res.status(500).json({ error: e.message }); }
     });
 });
 
@@ -336,7 +482,5 @@ app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.htm
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🌿 The Primrose Path server running!`);
-    console.log(`   Website:  http://127.0.0.1:${PORT}`);
-    console.log(`   Admin:    http://127.0.0.1:${PORT}/admin`);
-    console.log(`   Login:    admin / primrose123\n`);
+    
 });
