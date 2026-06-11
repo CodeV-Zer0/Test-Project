@@ -5,6 +5,7 @@ const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const cookieParser = require('cookie-parser');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(__dirname));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -24,8 +26,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
 const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_TOKEN || 'primrose-jwt-secret-2026';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
+const JWT_MAX_AGE = process.env.JWT_MAX_AGE_MS ? parseInt(process.env.JWT_MAX_AGE_MS, 10) : 8 * 3600 * 1000; // 8 hours default
 
 function getTokenFromRequest(req) {
+    // prefer cookie (httpOnly) when present
+    if (req.cookies && req.cookies.adminToken) return req.cookies.adminToken;
     const auth = req.headers['authorization'] || req.headers['Authorization'];
     if (auth && typeof auth === 'string' && auth.startsWith('Bearer ')) {
         return auth.slice(7);
@@ -43,6 +48,64 @@ function requireAuth(req, res, next) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 }
+
+    // ===== GEMINI / WHATSAPP SUPPORT =====
+    // Accept either `GOOGLE_API_KEY` or `GEMINI_API_KEY` (Render screenshot shows GEMINI_API_KEY)
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '';
+    const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || '';
+
+    if (!GOOGLE_API_KEY) console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
+    if (!WHATSAPP_NUMBER) console.warn('Warning: WHATSAPP_NUMBER is not set. WhatsApp redirects will be incomplete.');
+
+    function isComplex(question) {
+        if (!question) return false;
+        const q = question.toLowerCase();
+        const keywords = ['emergency','urgent','diagnose','severe','legal','medical','inspect','replace','warranty','refund'];
+        if (question.length > 200) return true;
+        if (keywords.some(k => q.includes(k))) return true;
+        return false;
+    }
+
+    app.post('/api/ask', async (req, res) => {
+        try {
+            const { question } = req.body;
+            if (!question) return res.status(400).json({ error: 'Missing question' });
+
+            if (isComplex(question)) {
+                const text = encodeURIComponent(`Customer needs help: ${question}`);
+                const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
+                return res.json({ redirect: true, whatsappUrl: wa });
+            }
+
+            // Call Google Generative API (Gemini / text-bison example). Replace model if desired.
+            const url = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate?key=${GOOGLE_API_KEY}`;
+            const body = {
+                prompt: { text: `You are a friendly plant-care expert. Answer concisely and practically for a customer:\n\n${question}` },
+                temperature: 0.2,
+                candidateCount: 1
+            };
+
+            const upstream = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!upstream.ok) {
+                const errText = await upstream.text();
+                return res.status(502).json({ error: 'Upstream error', detail: errText });
+            }
+            const data = await upstream.json();
+            let answer = '';
+            if (data?.candidates && data.candidates.length) answer = data.candidates[0].content || '';
+            else if (data?.output && data.output.length) answer = data.output[0].content || '';
+            else answer = JSON.stringify(data);
+
+            return res.json({ redirect: false, answer });
+        } catch (err) {
+            return res.status(500).json({ error: err.message });
+        }
+    });
 
 // Multer config - memory storage
 const storage = multer.memoryStorage();
@@ -92,14 +155,25 @@ app.post("/api/login", async (req, res) => {
     if (error && error.code !== 'PGRST116') return res.status(500).json(error);
     if (!data) return res.json({ success: false });
 
-    const token = jwt.sign({ username: data.username, role: 'admin' }, JWT_SECRET, {
-        expiresIn: JWT_EXPIRES_IN
+    const token = jwt.sign({ username: data.username, role: 'admin' }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // set httpOnly cookie (used by the admin UI) and return success
+    res.cookie('adminToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+        maxAge: JWT_MAX_AGE
     });
-    res.json({ success: true, token });
+    res.json({ success: true });
 });
 
 app.get("/api/admin/verify", requireAuth, (req, res) => {
     res.json({ success: true, user: req.user });
+});
+
+// Logout - clear cookie
+app.post('/api/logout', (req, res) => {
+    res.clearCookie('adminToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+    res.json({ success: true });
 });
 
 // ===== PLANTS =====
