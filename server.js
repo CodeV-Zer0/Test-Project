@@ -33,61 +33,6 @@ const upload = multer({
 // Global crash guard
 process.on("uncaughtException", err => console.error("Uncaught exception:", err));
  
-// Seed initial data if tables are empty
-async function seedIfEmpty() {
-    // Offers seed
-    const { data: offers } = await supabase.from('offers').select('id').limit(1);
-    if (offers && offers.length === 0) {
-        await supabase.from('offers').insert([
-            { emoji: "🌿", title: "Monsoon Starter Pack", description: "Get 3 easy-care plants — Money Plant, Aloe Vera & Peace Lily.", badge: "30% OFF", validity: "Valid till 30 June 2026", msg: "Hi! I want the Monsoon Starter Pack offer." },
-            { emoji: "🌸", title: "Buy 2 Get 1 Free", description: "Purchase any 2 flowering plants and get a third one free.", badge: "FREE PLANT", validity: "Weekends only", msg: "Hi! I want the Buy 2 Get 1 Free offer." },
-            { emoji: "🎁", title: "Housewarming Gift Combo", description: "Curated set of 5 indoor plants with decorative pots.", badge: "999 ONLY", validity: "Limited stock", msg: "Hi! I want the Housewarming Gift Combo." },
-            { emoji: "🌱", title: "Sapling Bundle", description: "10 mixed vegetable saplings — tomato, chilli, brinjal & more.", badge: "BEST VALUE", validity: "All year", msg: "Hi! I want the Sapling Bundle offer." }
-        ]);
-        console.log("Seeded offers.");
-    }
- 
-    // Reviews seed
-    const { data: reviews } = await supabase.from('reviews').select('id').limit(1);
-    if (reviews && reviews.length === 0) {
-        await supabase.from('reviews').insert([
-            { name: "Priya S.", location: "Madhapur", rating: 5, text: "Amazing plants! The QR code idea is so smart.", emoji: "🌸", date: "01/06/2026" },
-            { name: "Ravi Kumar", location: "Gachibowli", rating: 5, text: "Bought 6 plants, all healthy and growing well.", emoji: "🌿", date: "28/05/2026" },
-            { name: "Ananya T.", location: "Kondapur", rating: 4, text: "Great nursery! The care guide is really useful.", emoji: "🌹", date: "20/05/2026" },
-            { name: "Srinivas M.", location: "HITEC City", rating: 5, text: "Ordered via WhatsApp, delivered same day!", emoji: "🪴", date: "15/05/2026" }
-        ]);
-        console.log("Seeded reviews.");
-    }
- 
-    // Gallery seed
-    const { data: gallery } = await supabase.from('gallery').select('id').limit(1);
-    if (gallery && gallery.length === 0) {
-        await supabase.from('gallery').insert([
-            { category: 'group', label: 'Buddha feature grouping', description: 'image-1.png', photo: 'uploads/company-assets/image-1.png' },
-            { category: 'group', label: 'Office plant display', description: 'image-2.png', photo: 'uploads/company-assets/image-2.png' },
-            { category: 'group', label: 'Workspace plant cluster', description: 'image-3.png', photo: 'uploads/company-assets/image-3.png' },
-            { category: 'group', label: 'Large format indoor arrangement', description: 'image-4.png', photo: 'uploads/company-assets/image-4.png' },
-            { category: 'group', label: 'Planter boxes', description: 'indoor-plants-images-broucher-p07-01.jpg', photo: 'uploads/company-assets/pdf-extracted/indoor-plants-images-broucher-p07-01.jpg' },
-            { category: 'landscapes', label: 'Landscape path', description: 'profile-p-p01-01.jpg', photo: 'uploads/company-assets/pdf-extracted/profile-p-p01-01.jpg' },
-            { category: 'landscapes', label: 'Landscape walkway', description: 'profile-p-p01-02.jpg', photo: 'uploads/company-assets/pdf-extracted/profile-p-p01-02.jpg' },
-            { category: 'landscapes', label: 'Landscape feature', description: 'profile-p-p01-03.jpg', photo: 'uploads/company-assets/pdf-extracted/profile-p-p01-03.jpg' },
-            { category: 'landscapes', label: 'Garden landscape', description: 'profile-p-p01-04.jpg', photo: 'uploads/company-assets/pdf-extracted/profile-p-p01-04.jpg' },
-            { category: 'landscapes', label: 'Garden maintenance', description: 'profile-p-p01-05.jpg', photo: 'uploads/company-assets/pdf-extracted/profile-p-p01-05.jpg' },
-            { category: 'landscapes', label: 'Garden design', description: 'ppt-image-09.jpg', photo: 'uploads/ppt-assets/ppt-image-09.jpg' },
-            { category: 'customers', label: 'Administrative Staff College of India', description: 'ASCI', photo: 'uploads/ppt-assets/ppt-image-21.jpg' },
-            { category: 'customers', label: 'ICAR', description: 'ICAR', photo: 'uploads/ppt-assets/ppt-image-25.jpg' },
-            { category: 'customers', label: 'Dell', description: 'Dell', photo: 'uploads/ppt-assets/ppt-image-26.jpg' },
-            { category: 'customers', label: 'DRS International School', description: 'DRS International School', photo: 'uploads/ppt-assets/ppt-image-27.jpg' },
-            { category: 'customers', label: 'GE', description: 'GE', photo: 'uploads/ppt-assets/ppt-image-29.jpg' },
-            { category: 'customers', label: 'Microsoft', description: 'Microsoft', photo: 'uploads/ppt-assets/ppt-image-30.jpg' },
-            { category: 'customers', label: 'Motorola', description: 'Motorola', photo: 'uploads/ppt-assets/ppt-image-31.jpg' },
-            { category: 'customers', label: 'Tata Indicom', description: 'Tata Indicom', photo: 'uploads/ppt-assets/ppt-image-32.jpg' },
-            { category: 'customers', label: 'RMZ', description: 'RMZ', photo: 'uploads/ppt-assets/ppt-image-33.jpg' }
-        ]);
-        console.log("Seeded gallery.");
-    }
-}
- 
 // Helper: upload file to Supabase Storage
 async function uploadToSupabase(file, folder) {
     const filePath = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`;
@@ -320,5 +265,5 @@ app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.htm
  
 app.listen(PORT, "0.0.0.0", async () => {
     console.log(`\n🌿 The Primrose Path server running on port ${PORT}`);
-    await seedIfEmpty();
+    
 });
