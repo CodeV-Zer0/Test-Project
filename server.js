@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -21,14 +22,26 @@ const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_TOKEN || 'primrose-jwt-secret-2026';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
-// Admin auth
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'primrose-admin-secret-2026';
+function getTokenFromRequest(req) {
+    const auth = req.headers['authorization'] || req.headers['Authorization'];
+    if (auth && typeof auth === 'string' && auth.startsWith('Bearer ')) {
+        return auth.slice(7);
+    }
+    return req.headers['x-admin-token'] || '';
+}
 
 function requireAuth(req, res, next) {
-    const token = req.headers['x-admin-token'];
-    if (token !== ADMIN_TOKEN) return res.status(401).json({ error: 'Unauthorized' });
-    next();
+    const token = getTokenFromRequest(req);
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 }
 
 // Multer config - memory storage
@@ -67,6 +80,9 @@ async function deleteFromSupabase(publicUrl) {
 // ===== LOGIN =====
 app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, error: 'Username and password are required' });
+    }
     const { data, error } = await supabase
         .from('admins')
         .select('*')
@@ -74,8 +90,16 @@ app.post("/api/login", async (req, res) => {
         .eq('password', password)
         .single();
     if (error && error.code !== 'PGRST116') return res.status(500).json(error);
-    if (data) return res.json({ success: true, token: ADMIN_TOKEN });
-    res.json({ success: false });
+    if (!data) return res.json({ success: false });
+
+    const token = jwt.sign({ username: data.username, role: 'admin' }, JWT_SECRET, {
+        expiresIn: JWT_EXPIRES_IN
+    });
+    res.json({ success: true, token });
+});
+
+app.get("/api/admin/verify", requireAuth, (req, res) => {
+    res.json({ success: true, user: req.user });
 });
 
 // ===== PLANTS =====

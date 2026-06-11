@@ -72,7 +72,23 @@ tr:last-child td{border-bottom:none}
 <body>
 
 <script>
-if(localStorage.getItem("adminLoggedIn")!=="true") window.location.href="/login";
+async function verifyAdminSession(){
+  const token = localStorage.getItem('adminToken');
+  if(localStorage.getItem('adminLoggedIn') !== 'true' || !token){
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminLoggedIn');
+    window.location.href = '/login';
+    return false;
+  }
+  const res = await fetch('/api/admin/verify', { headers: { 'x-admin-token': token } });
+  if (!res.ok) {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminLoggedIn');
+    window.location.href = '/login';
+    return false;
+  }
+  return true;
+}
 </script>
 
 <div class="header">
@@ -304,8 +320,10 @@ if(localStorage.getItem("adminLoggedIn")!=="true") window.location.href="/login"
 
 <script>
 const BASE = "/api";
-const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
-function authHeaders() { return { 'x-admin-token': ADMIN_TOKEN }; }
+function authHeaders(){
+  const token = localStorage.getItem('adminToken');
+  return token ? { 'x-admin-token': token, authorization: `Bearer ${token}` } : {};
+}
 
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -673,9 +691,13 @@ async function deleteReview(id){
   loadReviews();
 }
 
-function logout(){ localStorage.removeItem('adminLoggedIn'); window.location.href='/login'; }
+function logout(){
+  localStorage.removeItem('adminLoggedIn');
+  localStorage.removeItem('adminToken');
+  window.location.href = '/login';
+}
 
-loadPlants();
+verifyAdminSession().then(ok => { if(ok) loadPlants(); });
 </script>
 <div id="image-modal" class="image-modal" onclick="closeImageModal()">
   <figure>
