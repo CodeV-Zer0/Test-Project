@@ -93,7 +93,7 @@ app.post('/api/ask', async (req, res) => {
         }
 
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash-exp",   // Fixed model
+            model: "gemini-1.5-flash",   // Fixed model
             systemInstruction: "You are a friendly, knowledgeable plant-care expert for 'The Primrose Path' nursery in Hyderabad. Answer concisely, practically, and helpfully. Use emojis sparingly."
         });
 
