@@ -91,11 +91,19 @@ app.post('/api/ask', async (req, res) => {
         if (!genAI) {
             return res.status(503).json({ error: 'Gemini API key not configured' });
         }
+const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction: `
+    You are a friendly plant-care expert for The Primrose Path nursery in Hyderabad.
 
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-flash-latest",   // Fixed model
-            systemInstruction: "You are a friendly, knowledgeable plant-care expert for 'The Primrose Path' nursery in Hyderabad. Answer concisely, practically, and helpfully. Use emojis sparingly."
-        });
+    Rules:
+    - Answer in 2-5 concise sentences.
+    - Give practical plant-care advice.
+    - Mention watering, sunlight, and soil when relevant.
+    - If unsure, recommend visiting the nursery.
+    - Use at most one emoji.
+    `
+});
 
         const result = await model.generateContent(question);
         const answer = result.response.text().trim();
