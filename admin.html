@@ -304,6 +304,8 @@ if(localStorage.getItem("adminLoggedIn")!=="true") window.location.href="/login"
 
 <script>
 const BASE = "/api";
+const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
+function authHeaders() { return { 'x-admin-token': ADMIN_TOKEN }; }
 
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -415,7 +417,7 @@ async function savePlant(){
   const method = id ? 'PUT' : 'POST';
 
   try {
-    const res = await fetch(url, { method, body: formData });
+    const res = await fetch(url, { method, body: formData, headers: authHeaders() });
     const data = await res.json();
 
     if(data.success || res.ok){
@@ -433,7 +435,7 @@ async function savePlant(){
 
 async function deletePlant(id){
   if(!confirm('Delete this plant?')) return;
-  await fetch(`${BASE}/plants/${id}`,{method:'DELETE'});
+  await fetch(`${BASE}/plants/${id}`,{method:'DELETE', headers: authHeaders()});
   loadPlants();
 }
 
@@ -523,7 +525,7 @@ async function saveGalleryItem(category) {
   if (photoFile) formData.append('photo', photoFile);
   const url = id ? `${BASE}/gallery/${id}` : `${BASE}/gallery`;
   const method = id ? 'PUT' : 'POST';
-  const res = await fetch(url, { method, body: formData });
+  const res = await fetch(url, { method, body: formData, headers: authHeaders() });
   const data = await res.json();
   if (data.success || res.ok) {
     clearGalleryForm(category);
@@ -536,7 +538,7 @@ async function saveGalleryItem(category) {
 
 async function deleteGallery(category, id) {
   if (!confirm('Delete this entry?')) return;
-  await fetch(`${BASE}/gallery/${id}`, { method:'DELETE' });
+ await fetch(`${BASE}/gallery/${id}`, { method:'DELETE', headers: authHeaders() });
   loadGallery(category);
 }
 
@@ -633,13 +635,13 @@ async function saveOffer(){
   const offer={title,badge:document.getElementById('o-badge').value,emoji:document.getElementById('o-emoji').value,validity:document.getElementById('o-validity').value,desc:document.getElementById('o-desc').value,msg:document.getElementById('o-msg').value};
   const url=id?`${BASE}/offers/${id}`:`${BASE}/offers`;
   const method=id?'PUT':'POST';
-  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(offer)});
+  await fetch(url,{method,headers:{'Content-Type':'application/json', ...authHeaders()},body:JSON.stringify(offer)});
   clearOfferForm(); loadOffers(); alert(id?'Offer updated!':'Offer added!');
 }
 
 async function deleteOffer(id){
   if(!confirm('Delete this offer?')) return;
-  await fetch(`${BASE}/offers/${id}`,{method:'DELETE'});
+  await fetch(`${BASE}/offers/${id}`,{method:'DELETE', headers: authHeaders()});
   loadOffers();
 }
 
@@ -667,7 +669,7 @@ async function loadReviews(){
 
 async function deleteReview(id){
   if(!confirm('Delete this review?')) return;
-  await fetch(`${BASE}/reviews/${id}`,{method:'DELETE'});
+  await fetch(`${BASE}/reviews/${id}`,{method:'DELETE', headers: authHeaders()});
   loadReviews();
 }
 
