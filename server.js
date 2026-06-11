@@ -1,4 +1,6 @@
 require('dotenv').config();
+console.log("GOOGLE_API_KEY loaded:", !!process.env.GOOGLE_API_KEY);
+console.log("WHATSAPP_NUMBER loaded:", process.env.WHATSAPP_NUMBER);
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
