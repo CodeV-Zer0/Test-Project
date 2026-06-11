@@ -7,9 +7,10 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require('cookie-parser');
 const { createClient } = require('@supabase/supabase-js');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;  // Changed to match your running port
 
 app.use(cors());
 app.use(express.json());
@@ -24,12 +25,27 @@ const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_TOKEN || 'primrose-jwt-secret-2026';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'primrose-jwt-secret-2026';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
-const JWT_MAX_AGE = process.env.JWT_MAX_AGE_MS ? parseInt(process.env.JWT_MAX_AGE_MS, 10) : 8 * 3600 * 1000; // 8 hours default
+const JWT_MAX_AGE = process.env.JWT_MAX_AGE_MS ? parseInt(process.env.JWT_MAX_AGE_MS, 10) : 8 * 3600 * 1000;
+
+// ===== GEMINI / WHATSAPP SUPPORT =====
+const GOOGLE_API_KEY = (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '').trim();
+const WHATSAPP_NUMBER = (process.env.WHATSAPP_NUMBER || '').trim();
+
+const sanitizedWhatsApp = WHATSAPP_NUMBER.replace(/[^0-9]/g, '');
+
+if (!GOOGLE_API_KEY) console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
+if (!sanitizedWhatsApp) console.warn('Warning: WHATSAPP_NUMBER is not set or invalid. WhatsApp redirects will be incomplete.');
+
+// Initialize Gemini
+let genAI;
+if (GOOGLE_API_KEY) {
+    genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+}
 
 function getTokenFromRequest(req) {
-    // prefer cookie (httpOnly) when present
     if (req.cookies && req.cookies.adminToken) return req.cookies.adminToken;
     const auth = req.headers['authorization'] || req.headers['Authorization'];
     if (auth && typeof auth === 'string' && auth.startsWith('Bearer ')) {
@@ -49,76 +65,60 @@ function requireAuth(req, res, next) {
     }
 }
 
-    // ===== GEMINI / WHATSAPP SUPPORT =====
-    // Accept either `GOOGLE_API_KEY` or `GEMINI_API_KEY` (Render screenshot shows GEMINI_API_KEY)
-    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '';
-    const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || '';
+function isComplex(question) {
+    if (!question) return false;
+    const q = question.toLowerCase();
+    const keywords = ['emergency','urgent','diagnose','severe','legal','medical','inspect','replace','warranty','refund'];
+    if (question.length > 200) return true;
+    if (keywords.some(k => q.includes(k))) return true;
+    return false;
+}
 
-    if (!GOOGLE_API_KEY) console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
-    if (!WHATSAPP_NUMBER) console.warn('Warning: WHATSAPP_NUMBER is not set. WhatsApp redirects will be incomplete.');
+// ====================== AI CHATBOT ENDPOINT ======================
+app.post('/api/ask', async (req, res) => {
+    try {
+        const { question } = req.body;
+        if (!question) return res.status(400).json({ error: 'Missing question' });
 
-    function isComplex(question) {
-        if (!question) return false;
-        const q = question.toLowerCase();
-        const keywords = ['emergency','urgent','diagnose','severe','legal','medical','inspect','replace','warranty','refund'];
-        if (question.length > 200) return true;
-        if (keywords.some(k => q.includes(k))) return true;
-        return false;
-    }
-
-    app.post('/api/ask', async (req, res) => {
-        try {
-            const { question } = req.body;
-            if (!question) return res.status(400).json({ error: 'Missing question' });
-
-            if (isComplex(question)) {
-                const text = encodeURIComponent(`Customer needs help: ${question}`);
-                const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
-                return res.json({ redirect: true, whatsappUrl: wa });
-            }
-
-            // Call Google Generative API (Gemini / text-bison example). Replace model if desired.
-            const url = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate?key=${GOOGLE_API_KEY}`;
-            const body = {
-                prompt: { text: `You are a friendly plant-care expert. Answer concisely and practically for a customer:\n\n${question}` },
-                temperature: 0.2,
-                candidateCount: 1
-            };
-
-            const upstream = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            if (!upstream.ok) {
-                const errText = await upstream.text();
-                return res.status(502).json({ error: 'Upstream error', detail: errText });
-            }
-            const data = await upstream.json();
-            let answer = '';
-            if (data?.candidates && data.candidates.length) answer = data.candidates[0].content || '';
-            else if (data?.output && data.output.length) answer = data.output[0].content || '';
-            else answer = JSON.stringify(data);
-
-            return res.json({ redirect: false, answer });
-        } catch (err) {
-            return res.status(500).json({ error: err.message });
+        if (isComplex(question)) {
+            const text = encodeURIComponent(`Customer needs help: ${question}`);
+            const wa = sanitizedWhatsApp ? `https://wa.me/${sanitizedWhatsApp}?text=${text}` : '';
+            return res.json({ redirect: true, whatsappUrl: wa });
         }
-    });
 
-// Multer config - memory storage
+        if (!genAI) {
+            return res.status(503).json({ error: 'Gemini API key not configured' });
+        }
+
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            systemInstruction: "You are a friendly, knowledgeable plant-care expert for 'The Primrose Path' nursery. Answer concisely, practically, and helpfully. Use emojis sparingly."
+        });
+
+        const result = await model.generateContent(question);
+        const answer = result.response.text().trim();
+
+        return res.json({ redirect: false, answer });
+
+    } catch (err) {
+        console.error("Gemini error:", err);
+        return res.status(500).json({ 
+            error: 'Failed to get response from AI',
+            detail: err.message 
+        });
+    }
+});
+
+// ====================== MULTER CONFIG ======================
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => file.mimetype && file.mimetype.startsWith("image/") ? cb(null, true) : cb(new Error("Images only"))
+    fileFilter: (req, file, cb) => 
+        file.mimetype && file.mimetype.startsWith("image/") ? cb(null, true) : cb(new Error("Images only"))
 });
 
-// Global crash guard
-process.on("uncaughtException", err => console.error("Uncaught exception:", err));
-
-// Helper: upload file to Supabase Storage
+// Helper: upload to Supabase
 async function uploadToSupabase(file, folder) {
     const filePath = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`;
     const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file.buffer, { contentType: file.mimetype });
@@ -127,7 +127,7 @@ async function uploadToSupabase(file, folder) {
     return data.publicUrl;
 }
 
-// Helper: delete file from Supabase Storage given a public URL
+// Helper: delete from Supabase
 async function deleteFromSupabase(publicUrl) {
     try {
         const u = new URL(publicUrl);
@@ -140,7 +140,7 @@ async function deleteFromSupabase(publicUrl) {
     } catch (e) { /* ignore */ }
 }
 
-// ===== LOGIN =====
+// ====================== AUTH ROUTES ======================
 app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -152,11 +152,12 @@ app.post("/api/login", async (req, res) => {
         .eq('username', username)
         .eq('password', password)
         .single();
+
     if (error && error.code !== 'PGRST116') return res.status(500).json(error);
     if (!data) return res.json({ success: false });
 
     const token = jwt.sign({ username: data.username, role: 'admin' }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    // set httpOnly cookie (used by the admin UI) and return success
+    
     res.cookie('adminToken', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -170,13 +171,12 @@ app.get("/api/admin/verify", requireAuth, (req, res) => {
     res.json({ success: true, user: req.user });
 });
 
-// Logout - clear cookie
 app.post('/api/logout', (req, res) => {
     res.clearCookie('adminToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
     res.json({ success: true });
 });
 
-// ===== PLANTS =====
+// ====================== PLANTS ======================
 app.get("/api/plants", async (req, res) => {
     const { data, error } = await supabase.from('plants').select('*').order('id', { ascending: false });
     if (error) return res.status(500).json(error);
@@ -194,12 +194,27 @@ app.post("/api/plants", requireAuth, upload.single("photo"), async (req, res) =>
         const { name, sci, price, type, water, sun, season, care, avail } = req.body;
         let photo = null;
         if (req.file) photo = await uploadToSupabase(req.file, 'plants');
+
         const { data, error } = await supabase.from('plants').insert([
-            { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1, photo }
+            { 
+                name, 
+                sci, 
+                price: price ? parseInt(price) : null, 
+                type, 
+                water, 
+                sun, 
+                season, 
+                care, 
+                avail: avail !== undefined ? parseInt(avail) : 1, 
+                photo 
+            }
         ]).select().single();
+
         if (error) return res.status(500).json(error);
         res.json({ success: true, id: data.id, photo });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 app.put("/api/plants/:id", requireAuth, upload.single("photo"), async (req, res) => {
@@ -211,12 +226,21 @@ app.put("/api/plants/:id", requireAuth, upload.single("photo"), async (req, res)
             if (old && old.photo) await deleteFromSupabase(old.photo);
             photo = await uploadToSupabase(req.file, 'plants');
         }
-        const updateData = { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1 };
+
+        const updateData = { 
+            name, sci, 
+            price: price ? parseInt(price) : null, 
+            type, water, sun, season, care, 
+            avail: avail !== undefined ? parseInt(avail) : 1 
+        };
         if (photo !== undefined) updateData.photo = photo;
+
         const { error } = await supabase.from('plants').update(updateData).eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true, photo });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 app.delete("/api/plants/:id", requireAuth, async (req, res) => {
@@ -226,10 +250,12 @@ app.delete("/api/plants/:id", requireAuth, async (req, res) => {
         const { error } = await supabase.from('plants').delete().eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
-// ===== GALLERY =====
+// ====================== GALLERY, OFFERS, REVIEWS, etc. (unchanged) ======================
 app.get("/api/gallery", async (req, res) => {
     const category = req.query.category;
     let query = supabase.from('gallery').select('*').order('sort_order', { ascending: true }).order('id', { ascending: true });
@@ -285,7 +311,7 @@ app.delete("/api/gallery/:id", requireAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ===== OFFERS =====
+// Offers
 app.get("/api/offers", async (req, res) => {
     const { data, error } = await supabase.from('offers').select('*').order('id', { ascending: true });
     if (error) return res.status(500).json(error);
@@ -314,7 +340,7 @@ app.delete("/api/offers/:id", requireAuth, async (req, res) => {
     res.json({ success: true });
 });
 
-// ===== REVIEWS =====
+// Reviews
 app.get("/api/reviews", async (req, res) => {
     const { data, error } = await supabase.from('reviews').select('*').order('id', { ascending: false });
     if (error) return res.status(500).json(error);
@@ -337,7 +363,7 @@ app.delete("/api/reviews/:id", requireAuth, async (req, res) => {
     res.json({ success: true });
 });
 
-// ===== SITEMAP =====
+// Sitemap
 app.get("/sitemap.xml", (req, res) => {
     res.header("Content-Type", "application/xml");
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -347,7 +373,7 @@ app.get("/sitemap.xml", (req, res) => {
 </urlset>`);
 });
 
-// ===== PAGE ROUTES =====
+// Page Routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
