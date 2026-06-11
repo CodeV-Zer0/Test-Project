@@ -5,23 +5,32 @@ const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
 const { createClient } = require('@supabase/supabase-js');
- 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
- 
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
- 
+
 if (!fs.existsSync("./uploads")) fs.mkdirSync("./uploads");
- 
+
 // Supabase client
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
- 
+
+// Admin auth
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'primrose-admin-secret-2026';
+
+function requireAuth(req, res, next) {
+    const token = req.headers['x-admin-token'];
+    if (token !== ADMIN_TOKEN) return res.status(401).json({ error: 'Unauthorized' });
+    next();
+}
+
 // Multer config - memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -29,10 +38,10 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => file.mimetype && file.mimetype.startsWith("image/") ? cb(null, true) : cb(new Error("Images only"))
 });
- 
+
 // Global crash guard
 process.on("uncaughtException", err => console.error("Uncaught exception:", err));
- 
+
 // Helper: upload file to Supabase Storage
 async function uploadToSupabase(file, folder) {
     const filePath = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`;
@@ -41,7 +50,7 @@ async function uploadToSupabase(file, folder) {
     const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
     return data.publicUrl;
 }
- 
+
 // Helper: delete file from Supabase Storage given a public URL
 async function deleteFromSupabase(publicUrl) {
     try {
@@ -54,7 +63,7 @@ async function deleteFromSupabase(publicUrl) {
         }
     } catch (e) { /* ignore */ }
 }
- 
+
 // ===== LOGIN =====
 app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
@@ -65,28 +74,28 @@ app.post("/api/login", async (req, res) => {
         .eq('password', password)
         .single();
     if (error && error.code !== 'PGRST116') return res.status(500).json(error);
-    res.json({ success: !!data });
+    if (data) return res.json({ success: true, token: ADMIN_TOKEN });
+    res.json({ success: false });
 });
- 
+
 // ===== PLANTS =====
 app.get("/api/plants", async (req, res) => {
     const { data, error } = await supabase.from('plants').select('*').order('id', { ascending: false });
     if (error) return res.status(500).json(error);
     res.json(data);
 });
- 
+
 app.get("/api/plants/:id", async (req, res) => {
     const { data, error } = await supabase.from('plants').select('*').eq('id', req.params.id).single();
     if (error) return res.status(error.code === 'PGRST116' ? 404 : 500).json(error);
     res.json(data);
 });
- 
-app.post("/api/plants", upload.single("photo"), async (req, res) => {
+
+app.post("/api/plants", requireAuth, upload.single("photo"), async (req, res) => {
     try {
         const { name, sci, price, type, water, sun, season, care, avail } = req.body;
         let photo = null;
         if (req.file) photo = await uploadToSupabase(req.file, 'plants');
- 
         const { data, error } = await supabase.from('plants').insert([
             { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1, photo }
         ]).select().single();
@@ -94,39 +103,34 @@ app.post("/api/plants", upload.single("photo"), async (req, res) => {
         res.json({ success: true, id: data.id, photo });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
-app.put("/api/plants/:id", upload.single("photo"), async (req, res) => {
+
+app.put("/api/plants/:id", requireAuth, upload.single("photo"), async (req, res) => {
     try {
         const { name, sci, price, type, water, sun, season, care, avail } = req.body;
         let photo = undefined;
- 
         if (req.file) {
-            // Delete old photo
             const { data: old } = await supabase.from('plants').select('photo').eq('id', req.params.id).single();
             if (old && old.photo) await deleteFromSupabase(old.photo);
             photo = await uploadToSupabase(req.file, 'plants');
         }
- 
         const updateData = { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1 };
         if (photo !== undefined) updateData.photo = photo;
- 
         const { error } = await supabase.from('plants').update(updateData).eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true, photo });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
-app.delete("/api/plants/:id", async (req, res) => {
+
+app.delete("/api/plants/:id", requireAuth, async (req, res) => {
     try {
         const { data: old } = await supabase.from('plants').select('photo').eq('id', req.params.id).single();
         if (old && old.photo) await deleteFromSupabase(old.photo);
- 
         const { error } = await supabase.from('plants').delete().eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
+
 // ===== GALLERY =====
 app.get("/api/gallery", async (req, res) => {
     const category = req.query.category;
@@ -134,22 +138,20 @@ app.get("/api/gallery", async (req, res) => {
     if (category) query = query.eq('category', category);
     const { data, error } = await query;
     if (error) return res.status(500).json(error);
-    // Map description back to desc for frontend compatibility
     res.json(data.map(r => ({ ...r, desc: r.description })));
 });
- 
+
 app.get("/api/gallery/:id", async (req, res) => {
     const { data, error } = await supabase.from('gallery').select('*').eq('id', req.params.id).single();
     if (error) return res.status(error.code === 'PGRST116' ? 404 : 500).json(error);
     res.json({ ...data, desc: data.description });
 });
- 
-app.post("/api/gallery", upload.single("photo"), async (req, res) => {
+
+app.post("/api/gallery", requireAuth, upload.single("photo"), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "Photo required" });
         const { category, label, desc } = req.body;
         const photo = await uploadToSupabase(req.file, 'gallery');
- 
         const { data, error } = await supabase.from('gallery').insert([
             { category: category || 'group', label: label || "Gallery Photo", description: desc || "", photo }
         ]).select().single();
@@ -157,47 +159,42 @@ app.post("/api/gallery", upload.single("photo"), async (req, res) => {
         res.json({ success: true, id: data.id, photo });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
-app.put("/api/gallery/:id", upload.single("photo"), async (req, res) => {
+
+app.put("/api/gallery/:id", requireAuth, upload.single("photo"), async (req, res) => {
     try {
         const { category, label, desc } = req.body;
         let photo = undefined;
- 
         if (req.file) {
             const { data: old } = await supabase.from('gallery').select('photo').eq('id', req.params.id).single();
             if (old && old.photo) await deleteFromSupabase(old.photo);
             photo = await uploadToSupabase(req.file, 'gallery');
         }
- 
         const updateData = { label: label || "Gallery Photo", description: desc || "", category: category || 'group' };
         if (photo !== undefined) updateData.photo = photo;
- 
         const { error } = await supabase.from('gallery').update(updateData).eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true, photo });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
-app.delete("/api/gallery/:id", async (req, res) => {
+
+app.delete("/api/gallery/:id", requireAuth, async (req, res) => {
     try {
         const { data: old } = await supabase.from('gallery').select('photo').eq('id', req.params.id).single();
         if (old && old.photo) await deleteFromSupabase(old.photo);
- 
         const { error } = await supabase.from('gallery').delete().eq('id', req.params.id);
         if (error) return res.status(500).json(error);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
- 
+
 // ===== OFFERS =====
 app.get("/api/offers", async (req, res) => {
     const { data, error } = await supabase.from('offers').select('*').order('id', { ascending: true });
     if (error) return res.status(500).json(error);
-    // Map description back to desc for frontend compatibility
     res.json(data.map(r => ({ ...r, desc: r.description })));
 });
- 
-app.post("/api/offers", async (req, res) => {
+
+app.post("/api/offers", requireAuth, async (req, res) => {
     const { emoji, title, desc, badge, validity, msg } = req.body;
     const { data, error } = await supabase.from('offers').insert([
         { emoji, title, description: desc, badge, validity, msg }
@@ -205,27 +202,27 @@ app.post("/api/offers", async (req, res) => {
     if (error) return res.status(500).json(error);
     res.json({ success: true, id: data.id });
 });
- 
-app.put("/api/offers/:id", async (req, res) => {
+
+app.put("/api/offers/:id", requireAuth, async (req, res) => {
     const { emoji, title, desc, badge, validity, msg } = req.body;
     const { error } = await supabase.from('offers').update({ emoji, title, description: desc, badge, validity, msg }).eq('id', req.params.id);
     if (error) return res.status(500).json(error);
     res.json({ success: true });
 });
- 
-app.delete("/api/offers/:id", async (req, res) => {
+
+app.delete("/api/offers/:id", requireAuth, async (req, res) => {
     const { error } = await supabase.from('offers').delete().eq('id', req.params.id);
     if (error) return res.status(500).json(error);
     res.json({ success: true });
 });
- 
+
 // ===== REVIEWS =====
 app.get("/api/reviews", async (req, res) => {
     const { data, error } = await supabase.from('reviews').select('*').order('id', { ascending: false });
     if (error) return res.status(500).json(error);
     res.json(data);
 });
- 
+
 app.post("/api/reviews", async (req, res) => {
     const { name, location, rating, text } = req.body;
     if (!name || !text || !rating) return res.status(400).json({ error: "Missing fields" });
@@ -235,35 +232,29 @@ app.post("/api/reviews", async (req, res) => {
     if (error) return res.status(500).json(error);
     res.json({ success: true, id: data.id });
 });
- 
-app.delete("/api/reviews/:id", async (req, res) => {
+
+app.delete("/api/reviews/:id", requireAuth, async (req, res) => {
     const { error } = await supabase.from('reviews').delete().eq('id', req.params.id);
     if (error) return res.status(500).json(error);
     res.json({ success: true });
 });
- 
-//===SITEMAP===
+
+// ===== SITEMAP =====
 app.get("/sitemap.xml", (req, res) => {
     res.header("Content-Type", "application/xml");
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.walktheprimrosepath.com/</loc>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.walktheprimrosepath.com/plant/</loc>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/plant/</loc><priority>0.8</priority></url>
 </urlset>`);
 });
+
 // ===== PAGE ROUTES =====
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
 app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
- 
-app.listen(PORT, "0.0.0.0", async () => {
+
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🌿 The Primrose Path server running on port ${PORT}`);
-    
 });
