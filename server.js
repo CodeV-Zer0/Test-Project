@@ -33,14 +33,27 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 const JWT_MAX_AGE = process.env.JWT_MAX_AGE_MS ? parseInt(process.env.JWT_MAX_AGE_MS, 10) : 8 * 3600 * 1000;
 
 // ===== GEMINI / WHATSAPP SUPPORT =====
+console.log("=== ENV DEBUG ===");
+console.log("GOOGLE_API_KEY exists:", !!process.env.GOOGLE_API_KEY);
+console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+console.log("WHATSAPP_NUMBER:", process.env.WHATSAPP_NUMBER ? "Yes (hidden)" : "Not set");
+
 const GOOGLE_API_KEY = (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '').trim();
 const WHATSAPP_NUMBER = (process.env.WHATSAPP_NUMBER || '').trim();
 
 const sanitizedWhatsApp = WHATSAPP_NUMBER.replace(/[^0-9]/g, '');
 
-if (!GOOGLE_API_KEY) console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
-if (!sanitizedWhatsApp) console.warn('Warning: WHATSAPP_NUMBER is not set or invalid. WhatsApp redirects will be incomplete.');
+if (!GOOGLE_API_KEY) {
+    console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
+} else {
+    console.log("✅ GOOGLE_API_KEY loaded successfully (length:", GOOGLE_API_KEY.length, ")");
+}
 
+if (!sanitizedWhatsApp) {
+    console.warn('Warning: WHATSAPP_NUMBER is not set or invalid.');
+} else {
+    console.log("✅ WHATSAPP_NUMBER loaded");
+}
 // Initialize Gemini
 let genAI;
 if (GOOGLE_API_KEY) {
