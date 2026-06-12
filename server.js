@@ -37,10 +37,10 @@ const WHATSAPP_NUMBER = (process.env.WHATSAPP_NUMBER || '').trim();
 const sanitizedWhatsApp = WHATSAPP_NUMBER.replace(/[^0-9]/g, '');
 
 if (!GOOGLE_API_KEY) console.warn('Warning: GOOGLE_API_KEY / GEMINI_API_KEY is not set. Gemini calls will fail.');
-else console.log(`✅ GOOGLE_API_KEY loaded (${GOOGLE_API_KEY.length} chars)`);
+
 
 if (!sanitizedWhatsApp) console.warn('Warning: WHATSAPP_NUMBER is not set or invalid.');
-else console.log("✅ WHATSAPP_NUMBER loaded");
+
 
 let genAI;
 if (GOOGLE_API_KEY) {
@@ -92,22 +92,40 @@ app.post('/api/ask', async (req, res) => {
             return res.status(503).json({ error: 'Gemini API key not configured' });
         }
 
+        // Fetch live data from Supabase
+        const { data: plants } = await supabase.from('plants').select('name,sci,price,type,water,sun,season,care,avail');
+        const { data: offers } = await supabase.from('offers').select('title,description,badge,validity');
+
+        const plantsText = (plants || []).map(p =>
+            `- ${p.name}${p.sci ? ` (${p.sci})` : ''}: ₹${p.price || '-'}, ${p.avail ? 'In stock' : 'Sold out'}. Watering: ${p.water || '-'}. Sunlight: ${p.sun || '-'}. Type: ${p.type || '-'}. Care: ${p.care || '-'}`
+        ).join('\n');
+
+        const offersText = (offers || []).map(o =>
+            `- ${o.title}: ${o.description || ''} (${o.badge || ''}, ${o.validity || ''})`
+        ).join('\n');
+
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             systemInstruction: `
-            You are a friendly plant-care expert for The Primrose Path nursery in Hyderabad.
+            You are a friendly plant-care expert and sales assistant for The Primrose Path nursery in Hyderabad.
+
+            Here is the CURRENT plant catalogue (use this for availability, prices, and recommendations):
+            ${plantsText || 'No plants currently listed.'}
+
+            Here are CURRENT offers:
+            ${offersText || 'No active offers.'}
 
             Rules:
             - Answer in 2-5 concise sentences.
-            - Give practical plant-care advice.
-            - Mention watering, sunlight, and soil when relevant.
-            - If unsure, recommend visiting the nursery.
+            - Use the catalogue above for prices/availability — don't guess.
+            - Give practical plant-care advice (watering, sunlight, soil) when relevant.
+            - If a plant isn't in the catalogue, say it's not currently available and suggest similar ones.
+            - Mention relevant offers if applicable.
             - Use at most one emoji.
             - Remember context from earlier in the conversation.
             `
         });
 
-        // Build conversation history for Gemini chat
         const chatHistory = (history || []).map(h => ({
             role: h.role === 'user' ? 'user' : 'model',
             parts: [{ text: h.text }]
