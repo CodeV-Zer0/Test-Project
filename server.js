@@ -95,6 +95,8 @@ app.post('/api/ask', async (req, res) => {
         // Fetch live data from Supabase
         const { data: plants } = await supabase.from('plants').select('name,sci,price,type,water,sun,season,care,avail');
         const { data: offers } = await supabase.from('offers').select('title,description,badge,validity');
+        const { data: gallery } = await supabase.from('gallery').select('category,label,description');
+        const { data: reviews } = await supabase.from('reviews').select('name,location,rating,text').order('id', { ascending: false }).limit(5);
 
         const plantsText = (plants || []).map(p =>
             `- ${p.name}${p.sci ? ` (${p.sci})` : ''}: ₹${p.price || '-'}, ${p.avail ? 'In stock' : 'Sold out'}. Watering: ${p.water || '-'}. Sunlight: ${p.sun || '-'}. Type: ${p.type || '-'}. Care: ${p.care || '-'}`
@@ -104,21 +106,48 @@ app.post('/api/ask', async (req, res) => {
             `- ${o.title}: ${o.description || ''} (${o.badge || ''}, ${o.validity || ''})`
         ).join('\n');
 
+        const groupArrangements = (gallery || []).filter(g => g.category === 'group')
+            .map(g => `- ${g.label}${g.description ? `: ${g.description}` : ''}`).join('\n');
+
+        const landscapes = (gallery || []).filter(g => g.category === 'landscapes')
+            .map(g => `- ${g.label}${g.description ? `: ${g.description}` : ''}`).join('\n');
+
+        const customers = (gallery || []).filter(g => g.category === 'customers')
+            .map(g => g.label).join(', ');
+
+        const reviewsText = (reviews || []).map(r =>
+            `- ${r.name} (${r.location || 'Hyderabad'}, ${r.rating}★): "${r.text}"`
+        ).join('\n');
+
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             systemInstruction: `
-            You are a friendly plant-care expert and sales assistant for The Primrose Path nursery in Hyderabad.
+            You are "Primmy", a friendly plant-care expert and sales assistant for The Primrose Path nursery in Hyderabad.
 
-            Here is the CURRENT plant catalogue (use this for availability, prices, and recommendations):
+            CURRENT PLANT CATALOGUE (use for availability, prices, recommendations):
             ${plantsText || 'No plants currently listed.'}
 
-            Here are CURRENT offers:
+            CURRENT OFFERS:
             ${offersText || 'No active offers.'}
+
+            GROUP ARRANGEMENTS (indoor plant groupings/displays we create):
+            ${groupArrangements || 'No group arrangements listed yet.'}
+
+            LANDSCAPE WORK (gardens, paths, outdoor design we've done):
+            ${landscapes || 'No landscape projects listed yet.'}
+
+            NOTABLE CUSTOMERS / INSTITUTIONS WE'VE WORKED WITH:
+            ${customers || 'Not listed.'}
+
+            RECENT CUSTOMER REVIEWS:
+            ${reviewsText || 'No reviews yet.'}
 
             Rules:
             - Answer in 2-5 concise sentences.
             - Use the catalogue above for prices/availability — don't guess.
             - Give practical plant-care advice (watering, sunlight, soil) when relevant.
+            - If asked about group arrangements, landscapes, or past work, refer to the lists above.
+            - If asked about reviews or reputation, you can mention real customer feedback above.
             - If a plant isn't in the catalogue, say it's not currently available and suggest similar ones.
             - Mention relevant offers if applicable.
             - Use at most one emoji.
