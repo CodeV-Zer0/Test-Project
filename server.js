@@ -79,7 +79,7 @@ function isComplex(question) {
 // ====================== AI CHATBOT ======================
 app.post('/api/ask', async (req, res) => {
     try {
-        const { question } = req.body;
+        const { question, history } = req.body;
         if (!question) return res.status(400).json({ error: 'Missing question' });
 
         if (isComplex(question)) {
@@ -91,21 +91,30 @@ app.post('/api/ask', async (req, res) => {
         if (!genAI) {
             return res.status(503).json({ error: 'Gemini API key not configured' });
         }
-const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: `
-    You are a friendly plant-care expert for The Primrose Path nursery in Hyderabad.
 
-    Rules:
-    - Answer in 2-5 concise sentences.
-    - Give practical plant-care advice.
-    - Mention watering, sunlight, and soil when relevant.
-    - If unsure, recommend visiting the nursery.
-    - Use at most one emoji.
-    `
-});
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            systemInstruction: `
+            You are a friendly plant-care expert for The Primrose Path nursery in Hyderabad.
 
-        const result = await model.generateContent(question);
+            Rules:
+            - Answer in 2-5 concise sentences.
+            - Give practical plant-care advice.
+            - Mention watering, sunlight, and soil when relevant.
+            - If unsure, recommend visiting the nursery.
+            - Use at most one emoji.
+            - Remember context from earlier in the conversation.
+            `
+        });
+
+        // Build conversation history for Gemini chat
+        const chatHistory = (history || []).map(h => ({
+            role: h.role === 'user' ? 'user' : 'model',
+            parts: [{ text: h.text }]
+        }));
+
+        const chat = model.startChat({ history: chatHistory });
+        const result = await chat.sendMessage(question);
         const answer = result.response.text().trim();
 
         return res.json({ redirect: false, answer });
@@ -118,7 +127,6 @@ const model = genAI.getGenerativeModel({
         });
     }
 });
-
 // ====================== MULTER ======================
 const storage = multer.memoryStorage();
 const upload = multer({
