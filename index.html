@@ -19,16 +19,23 @@ img{max-width:100%;display:block}
 .zoomable{cursor:zoom-in}
 button,input,textarea{font-family:inherit}
 .wa-float{position:fixed;bottom:22px;right:22px;z-index:999;background:#25d366;color:#fff;border:0;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 10px 28px rgba(37,211,102,.35)}
-.chat-button{position:fixed;left:18px;bottom:18px;background:#2d6a4f;color:#fff;border:none;padding:12px 16px;border-radius:999px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.18);font-size:14px;z-index:1000}
-.chat-modal{position:fixed;left:18px;bottom:72px;width:320px;max-width:90vw;background:#fff;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,0.18);overflow:hidden;display:none;z-index:1000}
-.chat-header{background:#1a3d2b;color:#fff;padding:10px 12px;font-weight:600}
-.chat-body{max-height:360px;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
-.chat-msg{padding:8px 10px;border-radius:10px;max-width:86%}
-.chat-msg.user{align-self:flex-end;background:#e6f7ee;color:#0b3a28}
-.chat-msg.bot{align-self:flex-start;background:#f1f4f3;color:#12331f}
-.chat-footer{display:flex;gap:8px;padding:10px;border-top:1px solid #eee}
-.chat-footer input{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px}
-.chat-footer button{background:#2d6a4f;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.chat-button{position:fixed;left:18px;bottom:18px;background:var(--leaf);color:#fff;border:none;padding:13px 20px;border-radius:999px;cursor:pointer;box-shadow:0 10px 28px rgba(45,106,79,.35);font-size:14px;font-weight:700;font-family:var(--font-body);z-index:1000;display:flex;align-items:center;gap:8px;transition:transform .2s}
+.chat-button:hover{transform:translateY(-2px)}
+.chat-modal{position:fixed;left:18px;bottom:78px;width:340px;max-width:90vw;background:var(--paper);border-radius:14px;box-shadow:0 24px 60px rgba(23,32,25,.22);overflow:hidden;display:none;z-index:1000;border:1px solid var(--line)}
+.chat-header{background:var(--ink);color:#fff;padding:16px 18px;font-family:var(--font-display);font-size:1.05rem;display:flex;align-items:center;justify-content:space-between}
+.chat-header-sub{font-size:11px;color:var(--moss);font-family:var(--font-body);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.chat-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:.7;line-height:1}
+.chat-close:hover{opacity:1}
+.chat-body{max-height:380px;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.chat-msg{padding:10px 13px;border-radius:12px;max-width:85%;font-size:13.5px;line-height:1.5}
+.chat-msg.user{align-self:flex-end;background:var(--leaf);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.bot{align-self:flex-start;background:#fff;color:var(--text);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat-footer{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
+.chat-footer input{flex:1;padding:10px 13px;border:1px solid var(--line);border-radius:999px;font-size:13px;outline:none;background:var(--paper)}
+.chat-footer input:focus{border-color:var(--leaf)}
+.chat-footer button{background:var(--leaf);color:#fff;border:none;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+.chat-footer button:hover{background:var(--ink)}
+.chat-welcome{font-size:12px;color:var(--muted);text-align:center;padding:8px 0}
 .nav{height:68px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 24px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(23,32,25,.1)}
 .nav-logo{display:flex;align-items:center;gap:10px;min-width:max-content;font-family:var(--font-display);font-size:1.15rem;color:var(--ink)}
 .nav-logo img{width:42px;height:42px;object-fit:contain;border-radius:50%;background:#fff}
@@ -157,13 +164,21 @@ button,input,textarea{font-family:inherit}
 </head>
 <body>
 <button class="wa-float" onclick="openWhatsApp('Hi! I visited The Primrose Path website and would like to know more.')">Chat on WhatsApp</button>
-<button id="chat-open" class="chat-button">🌿 Ask PlantBot</button>
+<button id="chat-open" class="chat-button">🌿 Ask Primmy</button>
 <div id="chat-modal" class="chat-modal" role="dialog" aria-label="Plant help chat">
-  <div class="chat-header">PlantBot — Ask plant care</div>
-  <div id="chat-body" class="chat-body"></div>
+  <div class="chat-header">
+    <div>
+      Primmy, your plant assistant
+      <div class="chat-header-sub">The Primrose Path</div>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div id="chat-body" class="chat-body">
+    <div class="chat-welcome">Ask about plants, care tips, or our services 🌱</div>
+  </div>
   <div class="chat-footer">
-    <input id="chat-input" placeholder="Ask about watering, pests, etc." />
-    <button id="chat-send" type="button">Send</button>
+    <input id="chat-input" placeholder="Type your question..." />
+    <button id="chat-send" type="button">➤</button>
   </div>
 </div>
 
@@ -599,6 +614,8 @@ function handleQRScan(){
 renderPlantLibrary();
 handleQRScan();
 
+let chatHistory = [];
+
 function addChatMessage(sender, text){
   const body = document.getElementById('chat-body');
   if(!body) return;
@@ -612,10 +629,12 @@ function addChatMessage(sender, text){
 async function askServer(question){
   try{
     addChatMessage('user', question);
+    chatHistory.push({ role: 'user', text: question });
+
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
+      body: JSON.stringify({ question, history: chatHistory.slice(0, -1) })
     });
     const j = await res.json();
     if(j.redirect){
@@ -623,6 +642,7 @@ async function askServer(question){
       window.open(j.whatsappUrl, '_blank');
     } else if(j.answer){
       addChatMessage('bot', j.answer);
+      chatHistory.push({ role: 'model', text: j.answer });
     } else if(j.error){
       addChatMessage('bot', 'Error: ' + j.error);
     } else {
@@ -653,6 +673,9 @@ document.getElementById('chat-input').addEventListener('keydown', (e)=>{
     e.preventDefault();
     document.getElementById('chat-send').click();
   }
+});
+document.getElementById('chat-close').addEventListener('click', ()=>{
+document.getElementById('chat-modal').style.display = 'none';
 });
 </script>
 <div id="image-modal" class="image-modal" onclick="closeImageModal()" style="display:none;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.82);padding:20px;z-index:9999;">
