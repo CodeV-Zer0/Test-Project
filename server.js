@@ -151,31 +151,43 @@ app.post('/api/ask', async (req, res) => {
             - If asked about reviews or reputation, you can mention real customer feedback above.
             - If a catalogue plant matches the query, recommend it first with price and availability.
             - If no catalogue plant matches, use your general plant knowledge to answer helpfully, then add: "We may not have this in stock right now — visit us or check back soon!"
-            - Never say "I only know indoor plants" — you are a knowledgeable plant expert.
+            - Never say you lack real-time info or can't answer general plant questions — you are a knowledgeable plant expert.
             - Mention relevant offers if applicable.
             - Use at most one emoji.
             - Remember context from earlier in the conversation.
             `
         });
 
-        const chatHistory = (history || []).map(h => ({
-            role: h.role === 'user' ? 'user' : 'model',
-            parts: [{ text: h.text }]
-        }));
+const rawHistory = (history || []).map(h => ({
+    role: h.role === 'user' ? 'user' : 'model',
+    parts: [{ text: h.text || ' ' }]  // never send empty text
+}));
 
-        const chat = model.startChat({ history: chatHistory });
-        const result = await chat.sendMessage(question);
+// Gemini requires strict user/model alternation
+// Filter out any consecutive duplicates
+const chatHistory = rawHistory.filter((h, i) => {
+    if (i === 0) return true;
+    return h.role !== rawHistory[i - 1].role;
+});
+
+// History must end with a model turn (not user)
+if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
+    chatHistory.pop();
+}
+
+const chat = model.startChat({ history: chatHistory });
+const result = await chat.sendMessage(question);
         const answer = result.response.text().trim();
 
         return res.json({ redirect: false, answer });
 
-    } catch (err) {
-        console.error("Gemini error:", err);
-        return res.status(500).json({ 
-            error: 'Failed to get response from AI',
-            detail: err.message 
-        });
-    }
+} catch (err) {
+    console.error("Gemini error:", err?.message || err);
+    return res.status(500).json({ 
+        error: 'Failed to get response from AI',
+        detail: err.message 
+    });
+}
 });
 // ====================== MULTER ======================
 const storage = multer.memoryStorage();
