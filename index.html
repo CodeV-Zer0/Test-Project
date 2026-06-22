@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head><meta name="google-site-verification" content="cDEL7lhTXUKkXlF59VEAkVpaIKLQm9MjO3HAAM4oODM" />
@@ -111,6 +110,7 @@ button,input,textarea{font-family:inherit}
 .detail-sci{font-size:13px;color:var(--muted);font-style:italic;margin-top:2px}
 .detail-price{display:block;margin:16px 0;font-size:1.45rem;color:var(--leaf);font-weight:700}
 .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.detail-grid .detail-stat:nth-child(5){grid-column:1/-1}
 .detail-stat{border:1px solid var(--line);border-radius:8px;padding:12px}
 .detail-stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
 .detail-stat-val{font-size:14px;color:var(--ink)}
@@ -326,7 +326,8 @@ button,input,textarea{font-family:inherit}
           <div class="detail-stat"><div class="detail-stat-label">Watering</div><div class="detail-stat-val" id="detail-water"></div></div>
           <div class="detail-stat"><div class="detail-stat-label">Sunlight</div><div class="detail-stat-val" id="detail-sun"></div></div>
           <div class="detail-stat"><div class="detail-stat-label">Season</div><div class="detail-stat-val" id="detail-season"></div></div>
-          <div class="detail-stat"><div class="detail-stat-label">Type</div><div class="detail-stat-val" id="detail-type"></div></div>
+          <div class="detail-stat"><div class="detail-stat-label">Temperature</div><div class="detail-stat-val" id="detail-temperature"></div></div>
+          <div class="detail-stat"><div class="detail-stat-label">Humidity</div><div class="detail-stat-val" id="detail-humidity"></div></div>
         </div>
         <div class="detail-care"><h3>Care tips</h3><p id="detail-care"></p></div>
         <button class="wa-order-btn" id="detail-wa-btn">Order via WhatsApp</button>
@@ -529,7 +530,8 @@ async function showPlant(id){
     document.getElementById('detail-water').textContent = p.water || '-';
     document.getElementById('detail-sun').textContent = p.sun || '-';
     document.getElementById('detail-season').textContent = p.season || '-';
-    document.getElementById('detail-type').textContent = p.type || '-';
+    document.getElementById('detail-temperature').textContent = p.temperature || '-';
+    document.getElementById('detail-humidity').textContent = p.humidity || '-';
     document.getElementById('detail-care').textContent = p.care || 'No care tips added yet.';
     const av = document.getElementById('detail-avail');
     av.textContent = p.avail ? 'In stock' : 'Sold out';

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,7 +127,8 @@ async function verifyAdminSession(){
       <option value="Spring">Spring</option>
     </select>
   </div>
-  <div class="form-group"><label>Type</label><input id="p-type" placeholder="e.g. Flowering"></div>
+  <div class="form-group"><label>Temperature</label><input id="p-temperature" placeholder="e.g. 18°C – 35°C"></div>
+  <div class="form-group"><label>Humidity</label><input id="p-humidity" placeholder="e.g. High / 60–80%"></div>
   
   <div class="form-group"><label>Availability</label>
     <select id="p-avail">
@@ -388,9 +388,10 @@ function editPlant(id){
   document.getElementById('p-name').value = p.name||'';
   document.getElementById('p-sci').value = p.sci||'';
   document.getElementById('p-price').value = p.price||'';
-  document.getElementById('p-type').value = p.type||'Flowering';
-  document.getElementById('p-water').value = p.water||'Every 2 days';
-  document.getElementById('p-sun').value = p.sun||'Full sun';
+  document.getElementById('p-temperature').value = p.temperature||'';
+  document.getElementById('p-humidity').value = p.humidity||'';
+  document.getElementById('p-water').value = p.water||'';
+  document.getElementById('p-sun').value = p.sun||'';
   document.getElementById('p-season').value = p.season||'All year';
   document.getElementById('p-care').value = p.care||'';
   document.getElementById('p-avail').value = p.avail;
@@ -421,7 +422,8 @@ async function savePlant(){
   formData.append('name', name);
   formData.append('sci', document.getElementById('p-sci').value.trim());
   formData.append('price', price);
-  formData.append('type', document.getElementById('p-type').value.trim());
+  formData.append('temperature', document.getElementById('p-temperature').value.trim());
+  formData.append('humidity', document.getElementById('p-humidity').value.trim());
   formData.append('water', document.getElementById('p-water').value.trim());
   formData.append('sun', document.getElementById('p-sun').value.trim());
   formData.append('season', document.getElementById('p-season').value);
@@ -462,7 +464,10 @@ function clearPlantForm(){
   document.getElementById('p-name').value='';
   document.getElementById('p-sci').value='';
   document.getElementById('p-price').value='';
-  document.getElementById('p-type').value='';
+  document.getElementById('p-temperature').value='';
+  document.getElementById('p-humidity').value='';
+  document.getElementById('p-water').value='';
+  document.getElementById('p-sun').value='';
   document.getElementById('p-care').value='';
   document.getElementById('p-avail').value='1';
   document.getElementById('p-photo').value='';
