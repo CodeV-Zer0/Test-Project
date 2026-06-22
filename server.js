@@ -93,13 +93,13 @@ app.post('/api/ask', async (req, res) => {
         }
 
         // Fetch live data from Supabase
-        const { data: plants } = await supabase.from('plants').select('name,sci,price,type,water,sun,season,care,avail');
+        const { data: plants } = await supabase.from('plants').select('name,sci,price,type,water,sun,season,care,avail,temperature,humidity');
         const { data: offers } = await supabase.from('offers').select('title,description,badge,validity');
         const { data: gallery } = await supabase.from('gallery').select('category,label,description');
         const { data: reviews } = await supabase.from('reviews').select('name,location,rating,text').order('id', { ascending: false }).limit(5);
 
         const plantsText = (plants || []).map(p =>
-            `- ${p.name}${p.sci ? ` (${p.sci})` : ''}: ₹${p.price || '-'}, ${p.avail ? 'In stock' : 'Sold out'}. Watering: ${p.water || '-'}. Sunlight: ${p.sun || '-'}. Type: ${p.type || '-'}. Care: ${p.care || '-'}`
+            `- ${p.name}${p.sci ? ` (${p.sci})` : ''}: ₹${p.price || '-'}, ${p.avail ? 'In stock' : 'Sold out'}. Watering: ${p.water || '-'}. Sunlight: ${p.sun || '-'}. Temperature: ${p.temperature || '-'}. Humidity: ${p.humidity || '-'}. Care: ${p.care || '-'}`
         ).join('\n');
 
         const offersText = (offers || []).map(o =>
@@ -271,12 +271,12 @@ app.get("/api/plants/:id", async (req, res) => {
 
 app.post("/api/plants", requireAuth, upload.single("photo"), async (req, res) => {
     try {
-        const { name, sci, price, type, water, sun, season, care, avail } = req.body;
+        const { name, sci, price, type, water, sun, season, care, avail, temperature, humidity } = req.body;
         let photo = null;
         if (req.file) photo = await uploadToSupabase(req.file, 'plants');
 
         const { data, error } = await supabase.from('plants').insert([
-            { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1, photo }
+            { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1, photo, temperature, humidity }
         ]).select().single();
 
         if (error) return res.status(500).json(error);
@@ -286,14 +286,14 @@ app.post("/api/plants", requireAuth, upload.single("photo"), async (req, res) =>
 
 app.put("/api/plants/:id", requireAuth, upload.single("photo"), async (req, res) => {
     try {
-        const { name, sci, price, type, water, sun, season, care, avail } = req.body;
+        const { name, sci, price, type, water, sun, season, care, avail, temperature, humidity } = req.body;
         let photo = undefined;
         if (req.file) {
             const { data: old } = await supabase.from('plants').select('photo').eq('id', req.params.id).single();
             if (old && old.photo) await deleteFromSupabase(old.photo);
             photo = await uploadToSupabase(req.file, 'plants');
         }
-        const updateData = { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1 };
+        const updateData = { name, sci, price: price ? parseInt(price) : null, type, water, sun, season, care, avail: avail !== undefined ? parseInt(avail) : 1, temperature, humidity };
         if (photo !== undefined) updateData.photo = photo;
 
         const { error } = await supabase.from('plants').update(updateData).eq('id', req.params.id);
