@@ -127,8 +127,7 @@ async function verifyAdminSession(){
       <option value="Spring">Spring</option>
     </select>
   </div>
-  <div class="form-group"><label>Temperature</label><input id="p-temperature" placeholder="e.g. 18°C – 35°C"></div>
-  <div class="form-group"><label>Humidity</label><input id="p-humidity" placeholder="e.g. High / 60–80%"></div>
+  <div class="form-group"><label>Type</label><input id="p-type" placeholder="e.g. Flowering"></div>
   
   <div class="form-group"><label>Availability</label>
     <select id="p-avail">
@@ -388,10 +387,9 @@ function editPlant(id){
   document.getElementById('p-name').value = p.name||'';
   document.getElementById('p-sci').value = p.sci||'';
   document.getElementById('p-price').value = p.price||'';
-  document.getElementById('p-temperature').value = p.temperature||'';
-  document.getElementById('p-humidity').value = p.humidity||'';
-  document.getElementById('p-water').value = p.water||'';
-  document.getElementById('p-sun').value = p.sun||'';
+  document.getElementById('p-type').value = p.type||'Flowering';
+  document.getElementById('p-water').value = p.water||'Every 2 days';
+  document.getElementById('p-sun').value = p.sun||'Full sun';
   document.getElementById('p-season').value = p.season||'All year';
   document.getElementById('p-care').value = p.care||'';
   document.getElementById('p-avail').value = p.avail;
@@ -422,8 +420,7 @@ async function savePlant(){
   formData.append('name', name);
   formData.append('sci', document.getElementById('p-sci').value.trim());
   formData.append('price', price);
-  formData.append('temperature', document.getElementById('p-temperature').value.trim());
-  formData.append('humidity', document.getElementById('p-humidity').value.trim());
+  formData.append('type', document.getElementById('p-type').value.trim());
   formData.append('water', document.getElementById('p-water').value.trim());
   formData.append('sun', document.getElementById('p-sun').value.trim());
   formData.append('season', document.getElementById('p-season').value);
@@ -464,10 +461,7 @@ function clearPlantForm(){
   document.getElementById('p-name').value='';
   document.getElementById('p-sci').value='';
   document.getElementById('p-price').value='';
-  document.getElementById('p-temperature').value='';
-  document.getElementById('p-humidity').value='';
-  document.getElementById('p-water').value='';
-  document.getElementById('p-sun').value='';
+  document.getElementById('p-type').value='';
   document.getElementById('p-care').value='';
   document.getElementById('p-avail').value='1';
   document.getElementById('p-photo').value='';
@@ -602,19 +596,23 @@ document.addEventListener('click', e => {
 // ===== QR CODE =====
 function generateQR(id,name){
   const url = window.location.origin + '/plant/' + id;
-  const win=window.open('','_blank','width=420,height:560');
-  win.document.write(`<html><head><title>QR - ${name}</title></head>
-    <body style="text-align:center;font-family:Arial;padding:30px">
-      <div style="background:#1a3d2b;color:white;padding:12px;border-radius:10px;margin-bottom:20px">
-        <div style="font-size:13px;opacity:0.7">The Primrose Path</div>
-        <div style="font-size:20px;font-weight:bold;margin-top:4px">${name}</div>
-      </div>
-      <div id="qr" style="display:flex;justify-content:center;margin:20px 0"></div>
-      <p style="font-size:11px;color:#aaa;margin-bottom:20px">Scan to view plant details</p>
+  const win=window.open('','_blank','width=380,height=520');
+  win.document.write(`<html><head><title>QR - ${name}</title>
+    <style>@media print{.no-print{display:none!important}}</style>
+  </head>
+  <body style="text-align:center;font-family:Arial;padding:28px;margin:0">
+    <h2 style="font-size:18px;color:#1a3d2b;margin:0 0 4px">${name}</h2>
+    <div id="qr" style="display:flex;justify-content:center;margin:16px 0"></div>
+    <p style="font-size:11px;color:#aaa;margin:0 0 14px">Scan to view plant details</p>
+    <div style="border-top:1px solid #e0e0e0;padding-top:12px"> 
+      <p style="font-size:16px;font-weight:bold;color:#1a3d2b;margin:0">🌿 The Primrose Path</p>
+    </div>
+    <div class="no-print" style="margin-top:18px">
       <button onclick="window.print()" style="padding:10px 28px;background:#2d6a4f;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨️ Print QR</button>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-      <script>new QRCode(document.getElementById('qr'),{text:'${url}',width:220,height:220,colorDark:'#1a3d2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});<\/script>
-    </body></html>`);
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <script>new QRCode(document.getElementById('qr'),{text:'${url}',width:200,height:200,colorDark:'#1a3d2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});<\/script>
+  </body></html>`);
 }
 
 // ===== OFFERS =====
