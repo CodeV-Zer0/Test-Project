@@ -604,8 +604,11 @@ function generateQR(id,name){
     <h2 style="font-size:18px;color:#1a3d2b;margin:0 0 4px">${name}</h2>
     <div id="qr" style="display:flex;justify-content:center;margin:16px 0"></div>
     <p style="font-size:11px;color:#aaa;margin:0 0 14px">Scan to view plant details</p>
-    <div style="border-top:1px solid #e0e0e0;padding-top:12px"> 
-      <p style="font-size:16px;font-weight:bold;color:#1a3d2b;margin:0">🌿 The Primrose Path</p>
+    <div style="padding-top:12px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+  <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/picture1.jpg" style="height:48px;width:auto;object-fit:contain">
+  <p style="font-size:16px;font-weight:bold;color:#1a3d2b;margin:0">The Primrose Path</p>
+</div>
     </div>
     <div class="no-print" style="margin-top:18px">
       <button onclick="window.print()" style="padding:10px 28px;background:#2d6a4f;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨️ Print QR</button>
