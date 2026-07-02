@@ -204,11 +204,23 @@ button,input,textarea{font-family:inherit}
 
 <div id="page-profile" class="page active">
   <section class="photo-hero">
-    <div class="hero-photo-grid" aria-hidden="true">
-      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-3.png" alt="Beautiful landscape garden designed by The Primrose Path" loading="lazy">
-      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-1.png" alt="Indoor plant arrangement for office and home" loading="lazy">
-      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/jan-canty-KcQuXaHCSPE-unsplash.jpg" alt="Professional landscape architecture project" loading="lazy">
-      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/profile-p-p01-05.jpg" alt="Garden maintenance and nursery work by Pragati Gardens" loading="lazy">
+        <div class="hero-photo-grid" aria-hidden="true" style="grid-template-columns: 1.2fr 1fr 1.1fr; grid-template-rows: 1fr 1fr;">
+      <!-- Main large image on left -->
+      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-3.png" 
+           alt="Beautiful landscape garden designed by The Primrose Path" 
+           loading="lazy" 
+           style="grid-row: 1 / span 2;">
+
+      <!-- Top right -->
+      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-1.png" 
+           alt="Indoor plant arrangement for office and home" 
+           loading="lazy">
+
+      <!-- Bottom right -->
+      <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/jan-canty-KcQuXaHCSPE-unsplash.jpg" 
+           alt="Professional landscape architecture project" 
+           loading="lazy" 
+           style="grid-row: 2;">
     </div>
     <div class="hero-content">
       <img class="hero-mark" src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/picture1.jpg" alt="The Primrose Path and Pragati Gardens logo " width="330">
