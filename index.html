@@ -12,6 +12,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <title>The Primrose Path & Pragati Gardens</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -171,6 +172,21 @@ button,input,textarea{font-family:inherit}
 .star-select{display:flex;gap:6px;margin-bottom:10px}
 .star-btn{border:0;background:none;font-size:24px;cursor:pointer;color:#c8c8c8}
 .star-btn.active{color:#c88b1a}
+.service-icon{
+    width:52px;
+    height:52px;
+    margin-bottom:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--leaf);
+}
+
+.service-icon svg{
+    width:34px;
+    height:34px;
+    stroke-width:2;
+}
 @media(max-width:820px){
   .nav{align-items:flex-start;height:auto;padding:10px 14px;flex-direction:column}
   .nav-tabs{width:100%;height:44px}
@@ -324,32 +340,44 @@ button,input,textarea{font-family:inherit}
     </div>
     <div class="service-grid">
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">🌳</div>
+<div class="service-icon">
+    <i data-lucide="trees"></i>
+</div>
         <h3>Landscape gardens</h3>
         <p>Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.</p>
       </div>
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">🪴</div>
+<div class="service-icon">
+    <i data-lucide="flower-2"></i>
+</div>
         <h3>Indoor potted plants</h3>
         <p>Indoor plant supply and placement for offices, lobbies, reception areas, and workspaces.</p>
       </div>
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">🔧</div>
+<div class="service-icon">
+    <i data-lucide="wrench"></i>
+</div>
         <h3>Maintenance</h3>
         <p>Landscape and plant maintenance with trained teams and regular care schedules.</p>
       </div>
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">🌱</div>
+<div class="service-icon">
+    <i data-lucide="sprout"></i>
+</div>
         <h3>Nursery support</h3>
         <p>Plant sourcing from nursery operations in Dharwad ,Kadiyam and Proddutur Village, with a wide variety of indoor and outdoor plants.</p>
       </div>
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">📚</div>
+<div class="service-icon">
+    <i data-lucide="graduation-cap"></i>
+</div>
         <h3>Workforce training</h3>
         <p>In-house training on skill development, safety, industrial environment, personal hygiene, and discipline.</p>
       </div>
       <div class="service-card">
-        <div style="font-size:2.4rem;margin-bottom:12px;color:var(--leaf)">🛡️</div>
+<div class="service-icon">
+    <i data-lucide="shield-check"></i>
+</div>
         <h3>Compliance focus</h3>
         <p>The company profile notes adherence to major statutory compliances in employment of workers.</p>
       </div>
@@ -768,6 +796,7 @@ document.getElementById('chat-input').addEventListener('keydown', (e)=>{
 document.getElementById('chat-close').addEventListener('click', ()=>{
 document.getElementById('chat-modal').style.display = 'none';
 });
+lucide.createIcons();
 </script>
 <div id="image-modal" class="image-modal" onclick="closeImageModal()" style="display:none;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.82);padding:20px;z-index:9999;">
   <figure style="position:relative;max-width:100%;max-height:100%;">
