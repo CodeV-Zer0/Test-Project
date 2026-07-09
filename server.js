@@ -426,9 +426,6 @@ app.get("/sitemap.xml", (req, res) => {
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/services/exterior-landscaping</loc><priority>0.8</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/services/work-process</loc><priority>0.8</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/services/interior-landscaping</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/plant/</loc><priority>0.8</priority></url>
 </urlset>`);
 });
@@ -437,9 +434,6 @@ app.get("/sitemap.xml", (req, res) => {
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
-app.get("/services/exterior-landscaping", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
-app.get("/services/work-process", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
-app.get("/services/interior-landscaping", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 app.listen(PORT, "0.0.0.0", () => {
