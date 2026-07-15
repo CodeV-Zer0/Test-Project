@@ -83,6 +83,17 @@ button,input,textarea{font-family:inherit}
 button, a, .card, input, .nav-link {
   transition: all 0.25s ease;
 }
+.btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 .hero-content{position:relative;z-index:1;width:min(1080px,100%);padding:44px clamp(22px,5vw,72px);color:#fff}
 .hero-mark{width:min(330px,78vw);background:#fff;border-radius:8px;padding:10px 16px;margin-bottom:20px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
 .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:#d5f1df;margin-bottom:12px}
