@@ -136,6 +136,8 @@ nav.scrolled {
 html {
   scroll-behavior: smooth;
 }
+.service-card{transition:transform .2s,box-shadow .2s}
+.service-card:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(23,32,25,.12)}
 .page {
   opacity: 0;
   transform: translateY(16px);
@@ -392,10 +394,10 @@ html {
       </div>
       <div>
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-value">20+</div><div class="stat-label">Years of landscape design, execution, and maintenance experience.</div></div>
-          <div class="stat-card"><div class="stat-value">300</div><div class="stat-label">People working across nursery, development, and maintenance operations.</div></div>
-          <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">Nursery bases: Dharwad, Kadiyam, and Proddutur Village.</div></div>
-          <div class="stat-card"><div class="stat-value">South</div><div class="stat-label">A leading landscape design and development service provider in South India.</div></div>
+                <div class="stat-card"><div class="stat-value"><span class="stat-number" data-count="20">0</span>+</div><div class="stat-label">Years of landscape design, execution, and maintenance experience.</div></div>
+                <div class="stat-card"><div class="stat-value"><span class="stat-number" data-count="300">0</span></div><div class="stat-label">People working across nursery, development, and maintenance operations.</div></div>
+                <div class="stat-card"><div class="stat-value"><span class="stat-number" data-count="3">0</span></div><div class="stat-label">Nursery bases: Dharwad, Kadiyam, and Proddutur Village.</div></div>
+                <div class="stat-card"><div class="stat-value">South</div><div class="stat-label">A leading landscape design and development service provider in South India.</div></div>
         </div>
         <div class="plain-card" style="margin-top:12px">
           <h3>Contact</h3>
@@ -616,6 +618,7 @@ function updateParallax() {
 window.addEventListener('scroll', () => {
   requestAnimationFrame(updateParallax);
 });
+
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -630,6 +633,30 @@ const nav = document.querySelector('nav');
 window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 40);
 });
+
+function animateCount(el, target, duration = 1500) {
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    el.textContent = Math.floor(progress * target);
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}
+
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseInt(el.dataset.count, 10);
+      animateCount(el, target);
+      statObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-number').forEach(el => statObserver.observe(el));
 
 const WA_NUMBER = '9959667133';
 const pageOrder = ['profile','shop','offers','plants','group','landscapes','customers','reviews'];
