@@ -80,6 +80,12 @@ button,input,textarea{font-family:inherit}
     object-fit:cover;
     object-position:center center;
 }
+.photo-hero {
+  overflow: hidden; /* so the image can shift without spilling out of its box */
+}
+.hero-photo-grid img {
+  will-change: transform; /* hints the browser to optimize this for animation */
+}
 button, a, .card, input, .nav-link {
   transition: all 0.25s ease;
 }
@@ -599,6 +605,17 @@ html {
 
 <script>
 
+const heroImg = document.querySelector('.hero-photo-grid img');
+
+function updateParallax() {
+  const scrollY = window.scrollY;
+  const speed = 0.3; // lower = slower/subtler movement, try 0.2–0.5
+  heroImg.style.transform = `translateY(${scrollY * speed}px)`;
+}
+
+window.addEventListener('scroll', () => {
+  requestAnimationFrame(updateParallax);
+});
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
