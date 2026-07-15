@@ -155,6 +155,8 @@ html {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+
+
 .hero-content{position:relative;z-index:1;width:min(1080px,100%);padding:44px clamp(22px,5vw,72px);color:#fff}
 .hero-mark{width:min(330px,78vw);background:#fff;border-radius:8px;padding:10px 16px;margin-bottom:20px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
 .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:#d5f1df;margin-bottom:12px}
@@ -193,6 +195,20 @@ html {
 .search-bar input{width:100%;height:46px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 48px 0 18px;color:var(--ink);outline:none}
 .search-bar button{position:absolute;right:6px;top:6px;width:34px;height:34px;border-radius:50%;border:0;background:var(--leaf);color:#fff;cursor:pointer}
 .catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.loader{
+height:50px;
+width:50px;
+border-radius:50%;
+border:5px solid #eee;
+border-top:5px solid green;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
 .plant-card{overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .plant-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(23,32,25,.12)}
 .plant-card-img{height:170px;background:#eef0eb;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -269,6 +285,25 @@ html {
     width:34px;
     height:34px;
     stroke-width:2;
+}
+footer{
+    padding:40px 20px;
+    text-align:center;
+    background:#ffffff;
+    border-top:1px solid var(--line);
+    color:var(--text);
+    line-height:2;
+}
+
+footer h3{
+    font-family:var(--font-display);
+    color:var(--leaf);
+    margin-bottom:10px;
+}
+
+footer p{
+    font-size:14px;
+    color:var(--text);
 }
 @media(max-width:820px){
   .nav{align-items:flex-start;height:auto;padding:10px 14px;flex-direction:column}
@@ -502,7 +537,7 @@ html {
 </div>
 
 <div id="page-plants" class="page">
-  <section class="section">
+  < class="section">
     <div class="section-head">
       <div>
         <h2>Plants available</h2>
@@ -510,7 +545,12 @@ html {
       </div>
       <div class="search-bar"><input type="text" placeholder="Search available plants..." oninput="filterPlants(this.value)"><button>Go</button></div>
     </div>
-    <div class="catalog-grid" id="catalog-grid"><p style="color:var(--muted);padding:1rem">Loading plants...</p></div>
+    <div style="text-align:center;"></div>
+    <div class="loader"></div>
+    <p style="color:var(--muted);">
+            Loading plants...
+        </p>
+        </div>
   </section>
   <section class="section compact">
     <h2>Indoor air purification plants</h2>
@@ -616,7 +656,19 @@ html {
 <script>
 
 const heroImg = document.querySelector('.hero-photo-grid img');
+if(heroImg){
 
+window.addEventListener(
+'scroll',
+()=>{
+
+requestAnimationFrame(
+updateParallax
+);
+
+});
+
+}
 function updateParallax() {
   const scrollY = window.scrollY;
   const speed = 0.3; // lower = slower/subtler movement, try 0.2–0.5
@@ -824,7 +876,7 @@ async function loadReviews(){
   try{
     const reviews = await fetch('/api/reviews').then(r=>r.json());
     document.getElementById('testi-grid').innerHTML = !reviews.length
-      ? '<p style="color:var(--muted)">No reviews yet. Be the first.</p>'
+      ? '<div class="loader"></div><p style="color:var(--muted)">No reviews yet. Be the first.</p>'
       : reviews.map(r => `
         <div class="review-card">
           <div class="stars">${'*'.repeat(r.rating)}${'-'.repeat(5-r.rating)}</div>
@@ -947,6 +999,43 @@ lucide.createIcons();
     <figcaption style="color:#fff;text-align:center;margin-top:12px;font-size:14px"></figcaption>
     <button onclick="event.stopPropagation();closeImageModal()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer;">✕</button>
   </figure>
+  <div id="image-modal" ....>
+.....
+</div>
+
+
+<!-- FOOTER STARTS HERE -->
+
+<footer>
+    <h3>The Primrose Path & Pragati Gardens</h3>
+
+    <p>
+        Landscape Architects • Indoor Plants • Garden Maintenance
+    </p>
+
+    <p>
+        Hyderabad • Dharwad • Kadiyam • Proddutur Village
+    </p>
+
+    <p>
+        +91 9959667133 | +91 9963334145
+    </p>
+
+    <p>
+        theprimrose@gmail.com
+    </p>
+
+    <p>
+        © 2026 The Primrose Path & Pragati Gardens.
+        All Rights Reserved.
+    </p>
+</footer>
+
+<!-- FOOTER ENDS HERE -->
+
+
+</body>
+</html>
 </div>
 </body>
 </html>
