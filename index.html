@@ -94,6 +94,30 @@ button, a, .card, input, .nav-link {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.25s ease, left 0.25s ease;
+}
+.nav-link:hover::after {
+  width: 100%;
+  left: 0;
+}
+nav {
+  transition: padding 0.3s ease, box-shadow 0.3s ease;
+}
+nav.scrolled {
+  padding-block: 8px; /* smaller than default */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
 .hero-content{position:relative;z-index:1;width:min(1080px,100%);padding:44px clamp(22px,5vw,72px);color:#fff}
 .hero-mark{width:min(330px,78vw);background:#fff;border-radius:8px;padding:10px 16px;margin-bottom:20px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
 .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:#d5f1df;margin-bottom:12px}
@@ -538,6 +562,12 @@ button, a, .card, input, .nav-link {
 </div>
 
 <script>
+
+const nav = document.querySelector('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+});
+
 const WA_NUMBER = '9959667133';
 const pageOrder = ['profile','shop','offers','plants','group','landscapes','customers','reviews'];
 let plants = [];
