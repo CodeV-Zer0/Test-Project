@@ -13,10 +13,17 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <title>The Primrose Path & Pragati Gardens</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="color-scheme" id="color-scheme-meta" content="light">
 <script>
-  if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark-mode');
-  }
+  (function() {
+    var saved = localStorage.getItem('theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var isDark = saved === 'dark' || (!saved && prefersDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark-mode');
+      document.getElementById('color-scheme-meta').setAttribute('content', 'dark');
+    }
+  })();
 </script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
@@ -1425,19 +1432,24 @@ function historyBackFromArticle() {
 }
 
 function toggleTheme() {
-  const isDark = document.documentElement.classList.toggle('dark-mode');
+  var isDark = document.documentElement.classList.toggle('dark-mode');
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  const iconEl = document.getElementById('theme-icon');
-  if(iconEl) {
+  var meta = document.getElementById('color-scheme-meta');
+  if (meta) meta.setAttribute('content', isDark ? 'dark' : 'light');
+  var iconEl = document.getElementById('theme-icon');
+  if (iconEl) {
     iconEl.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
     lucide.createIcons();
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   if (document.documentElement.classList.contains('dark-mode')) {
-    const iconEl = document.getElementById('theme-icon');
-    if (iconEl) iconEl.setAttribute('data-lucide', 'sun');
+    var iconEl = document.getElementById('theme-icon');
+    if (iconEl) {
+      iconEl.setAttribute('data-lucide', 'sun');
+      lucide.createIcons();
+    }
   }
 });
 
