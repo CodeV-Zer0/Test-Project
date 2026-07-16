@@ -48,6 +48,8 @@ button,input,textarea{font-family:inherit}
 .nav-logo img{width:42px;height:42px;object-fit:contain;border-radius:50%;background:#fff}
 .nav-logo span{font-style:italic;color:var(--leaf)}
 .nav-tabs{display:flex;align-items:center;overflow-x:auto;height:100%}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tabs{scrollbar-width:none;-ms-overflow-style:none}
 .nav-tab{height:68px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:600;color:#5a665d;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
 .nav-tab:hover,.nav-tab.active{color:var(--ink);border-bottom-color:var(--leaf)}
 .page{display:none;min-height:calc(100vh - 68px)}
@@ -271,18 +273,7 @@ html {
     height:34px;
     stroke-width:2;
 }
-.footer{
-    text-align:center;
-    padding:20px;
-    border-top:1px solid var(--line);
-    background:var(--paper);
-    color:var(--text);
-    font-size:14px;
-}
 
-.footer p{
-    margin:0;
-}
 @media(max-width:820px){
   .nav{align-items:flex-start;height:auto;padding:10px 14px;flex-direction:column}
   .nav-tabs{width:100%;height:44px}
@@ -973,11 +964,56 @@ lucide.createIcons();
     <button onclick="event.stopPropagation();closeImageModal()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer;">✕</button>
   </figure>
 </div>
-<footer class="footer">
-    <p style="margin-top:20px;">
-        © 2026 The Primrose Path & Pragati Gardens.
-        All Rights Reserved.
-    </p>
+<footer style="background:var(--ink);color:rgba(255,255,255,0.55);padding:48px 24px 28px">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:36px;margin-bottom:40px">
+
+      <div>
+        <img src="https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/picture1.jpg"
+             alt="The Primrose Path logo" style="height:56px;width:auto;object-fit:contain;filter:brightness(1.2);margin-bottom:16px;display:block">
+        <p style="font-size:13px;line-height:1.8;color:rgba(255,255,255,0.5);max-width:240px">
+          Landscape architects bringing nature closer to people through design, indoor plants, and maintenance.
+        </p>
+      </div>
+
+      <div>
+        <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leaf);font-weight:700;margin-bottom:16px">Quick links</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span onclick="showPage('profile')" style="font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Profile</span>
+          <span onclick="showPage('shop')" style="font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Shop</span>
+          <span onclick="showPage('plants')" style="font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Plants</span>
+          <span onclick="showPage('offers')" style="font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Offers</span>
+          <span onclick="showPage('reviews')" style="font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Reviews</span>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leaf);font-weight:700;margin-bottom:16px">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <div>📍 1-90, Plot #20, Durgam Cheruvu Road, Kavuri Hills, Hyderabad – 500 033</div>
+          <div>📞 040-2311 0274 / 3097 3901</div>
+          <div>📧 theprimrose@gmail.com</div>
+          <div>🕐 Mon – Sat: 9:00 am – 6:00 pm</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--leaf);font-weight:700;margin-bottom:16px">Get in touch</div>
+        <p style="font-size:13px;line-height:1.8;margin-bottom:16px;color:rgba(255,255,255,0.5)">
+          The fastest way to reach us is WhatsApp. Ask about plants, landscaping, or maintenance.
+        </p>
+        <button onclick="openWhatsApp('Hi! I visited The Primrose Path website and would like to get in touch.')"
+          style="background:#25d366;color:#fff;border:none;padding:11px 22px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer">
+          💬 WhatsApp us
+        </button>
+      </div>
+
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">
+      <p style="font-size:12px;color:rgba(255,255,255,0.3)">© 2026 The Primrose Path & Pragati Gardens. All rights reserved.</p>
+      <p style="font-size:12px;color:rgba(255,255,255,0.2)">walktheprimrosepath.com</p>
+    </div>
+  </div>
 </footer>
 
 </body>
