@@ -486,6 +486,24 @@ footer .footer-logo{
 }
 footer .footer-logo:hover{opacity:1}
 
+/* ===== ARTICLE PAGE ===== */
+.article-wrap{max-width:860px;margin:0 auto;padding:0 18px 56px}
+.article-hero{height:400px;border-radius:var(--radius-xl);overflow:hidden;margin:32px 0 48px;position:relative}
+.article-hero img{width:100%;height:100%;object-fit:cover}
+.article-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent, rgba(15,26,20,0.4))}
+.article-header{max-width:720px;margin:0 auto}
+.article-title{font-family:var(--font-display);font-size:clamp(2.4rem, 5vw, 3.6rem);line-height:1.1;margin-bottom:16px;color:var(--ink)}
+.article-subtitle{font-size:1.2rem;color:var(--muted);line-height:1.6}
+.article-body{max-width:720px;margin:0 auto;font-size:1.05rem;line-height:1.8;color:var(--text)}
+.article-body p{margin-bottom:24px}
+.article-body h3{font-family:var(--font-display);font-size:1.6rem;color:var(--ink);margin:40px 0 16px}
+.article-body ul{margin:0 0 24px 24px}
+.article-body li{margin-bottom:12px}
+.article-back{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;cursor:pointer;margin-top:32px;transition:color var(--transition)}
+.article-back:hover{color:var(--leaf)}
+@media(max-width:820px){.article-hero{height:300px}}
+@media(max-width:560px){.article-hero{height:220px}}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:820px){
   .nav{align-items:flex-start;height:auto;padding:10px 14px;flex-direction:column}
@@ -633,32 +651,32 @@ footer .footer-logo:hover{opacity:1}
       </div>
     </div>
     <div class="service-grid">
-      <div class="service-card reveal reveal-delay-1">
+      <div class="service-card reveal reveal-delay-1" style="cursor:pointer" onclick="openArticle('service-landscapes')">
         <div class="service-icon"><i data-lucide="trees"></i></div>
         <h3>Landscape gardens</h3>
         <p>Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.</p>
       </div>
-      <div class="service-card reveal reveal-delay-2">
+      <div class="service-card reveal reveal-delay-2" style="cursor:pointer" onclick="openArticle('service-indoor')">
         <div class="service-icon"><i data-lucide="flower-2"></i></div>
         <h3>Indoor potted plants</h3>
         <p>Indoor plant supply and placement for offices, lobbies, reception areas, and workspaces.</p>
       </div>
-      <div class="service-card reveal reveal-delay-3">
+      <div class="service-card reveal reveal-delay-3" style="cursor:pointer" onclick="openArticle('service-maintenance')">
         <div class="service-icon"><i data-lucide="wrench"></i></div>
         <h3>Maintenance</h3>
         <p>Landscape and plant maintenance with trained teams and regular care schedules.</p>
       </div>
-      <div class="service-card reveal reveal-delay-1">
+      <div class="service-card reveal reveal-delay-1" style="cursor:pointer" onclick="openArticle('service-nursery')">
         <div class="service-icon"><i data-lucide="sprout"></i></div>
         <h3>Nursery support</h3>
         <p>Plant sourcing from nursery operations in Dharwad, Kadiyam and Proddutur Village, with a wide variety of indoor and outdoor plants.</p>
       </div>
-      <div class="service-card reveal reveal-delay-2">
+      <div class="service-card reveal reveal-delay-2" style="cursor:pointer" onclick="openArticle('service-training')">
         <div class="service-icon"><i data-lucide="graduation-cap"></i></div>
         <h3>Workforce training</h3>
         <p>In-house training on skill development, safety, industrial environment, personal hygiene, and discipline.</p>
       </div>
-      <div class="service-card reveal reveal-delay-3">
+      <div class="service-card reveal reveal-delay-3" style="cursor:pointer" onclick="openArticle('service-compliance')">
         <div class="service-icon"><i data-lucide="shield-check"></i></div>
         <h3>Compliance focus</h3>
         <p>The company profile notes adherence to major statutory compliances in employment of workers.</p>
@@ -852,6 +870,19 @@ footer .footer-logo:hover{opacity:1}
       <button class="btn green" onclick="submitReview()">Submit review</button>
     </div>
   </section>
+</div>
+
+<!-- ==================== ARTICLE PAGE ==================== -->
+<div id="page-article" class="page">
+  <div class="article-wrap">
+    <div class="article-back" onclick="historyBackFromArticle()">← Back</div>
+    <div class="article-hero"><img id="article-img" src="" alt=""></div>
+    <div class="article-header">
+      <h1 class="article-title" id="article-title"></h1>
+      <p class="article-subtitle" id="article-subtitle"></p>
+    </div>
+    <div class="article-body" id="article-content"></div>
+  </div>
 </div>
 
 <!-- ==================== JAVASCRIPT ==================== -->
@@ -1160,8 +1191,8 @@ async function submitReview(){
 
 // ===== PLANT LIBRARY =====
 function renderPlantLibrary(){
-  document.getElementById('plant-library').innerHTML = airPlants.map(p => `
-    <div class="library-card reveal">
+  document.getElementById('plant-library').innerHTML = airPlants.map((p, i) => `
+    <div class="library-card reveal" style="cursor:pointer" onclick="openArticle('plant-' + ${i})">
       <h3>${p[0]}</h3>
       <small>${p[1]}</small>
       <p>${p[2]}</p>
@@ -1243,6 +1274,135 @@ document.getElementById('chat-input').addEventListener('keydown', (e)=>{
 document.getElementById('chat-close').addEventListener('click', ()=>{
   document.getElementById('chat-modal').style.display = 'none';
 });
+
+// ===== ARTICLES DATA & ROUTING =====
+let lastPageBeforeArticle = 'profile';
+
+const articlesData = {
+  'service-landscapes': {
+    title: 'Landscape Gardens',
+    subtitle: 'Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/profile-p-p01-01.jpg',
+    html: `<p>A well-designed landscape is more than just plants—it is the integration of nature into the built environment. At The Primrose Path, we approach landscape design with a deep understanding of local ecology, soil conditions, and architectural harmony.</p>
+    <h3>Our Process</h3>
+    <ul>
+      <li><strong>Site Analysis:</strong> Understanding sunlight, soil, water drainage, and the existing environment.</li>
+      <li><strong>Concept Design:</strong> Creating detailed layouts that balance aesthetics, functionality, and sustainability.</li>
+      <li><strong>Execution:</strong> Hardscaping, softscaping, irrigation installation, and planting by our trained workforce.</li>
+    </ul>
+    <p>From sprawling institutional campuses to intimate residential gardens, our team ensures that every landscape thrives for years to come.</p>`
+  },
+  'service-indoor': {
+    title: 'Indoor Potted Plants',
+    subtitle: 'Indoor plant supply and placement for offices, lobbies, reception areas, and workspaces.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-4.png',
+    html: `<p>Indoor plants breathe life into enclosed spaces. They reduce stress, boost productivity, and improve air quality by filtering out volatile organic compounds (VOCs) commonly found in modern buildings.</p>
+    <h3>What We Provide</h3>
+    <ul>
+      <li><strong>Custom Selection:</strong> Choosing the right plants based on indoor lighting, AC conditions, and interior aesthetics.</li>
+      <li><strong>Premium Planters:</strong> Supplying fiberglass, ceramic, and self-watering pots to complement your decor.</li>
+      <li><strong>Strategic Placement:</strong> Arranging plants in reception areas, workstations, and executive cabins to maximize impact.</li>
+    </ul>
+    <p>Whether you need a few statement pieces for a lobby or a complete biophilic design for a large corporate office, we have the inventory and expertise to deliver.</p>`
+  },
+  'service-maintenance': {
+    title: 'Maintenance',
+    subtitle: 'Landscape and plant maintenance with trained teams and regular care schedules.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/profile-p-p01-05.jpg',
+    html: `<p>A beautiful garden requires consistent, professional care. Our maintenance services ensure that your landscapes and indoor plants remain lush, healthy, and visually stunning throughout the year.</p>
+    <h3>Maintenance Operations Include</h3>
+    <ul>
+      <li><strong>Pruning & Trimming:</strong> Regular shaping of shrubs, hedges, and trees for aesthetic and healthy growth.</li>
+      <li><strong>Nutrition Management:</strong> Timely application of organic and inorganic fertilizers.</li>
+      <li><strong>Pest & Disease Control:</strong> Preventive and curative treatments using safe, effective methods.</li>
+      <li><strong>Irrigation Checks:</strong> Ensuring optimal water delivery and preventing waterlogging.</li>
+    </ul>
+    <p>We provide dedicated onsite teams for large properties and scheduled weekly/monthly visits for smaller setups, fully equipped with professional tools and safety gear.</p>`
+  },
+  'service-nursery': {
+    title: 'Nursery Support',
+    subtitle: 'Plant sourcing from nursery operations in Dharwad, Kadiyam and Proddutur Village.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/dex-ezekiel-uwb7Mbj2Bmo-unsplash.jpg',
+    html: `<p>The backbone of our landscape and indoor plant services is our robust nursery infrastructure. With operational bases in Dharwad (Karnataka), Kadiyam (Andhra Pradesh), and Proddutur Village (Telangana), we cultivate and source a vast variety of flora.</p>
+    <h3>Our Nursery Advantage</h3>
+    <ul>
+      <li><strong>Acclimatized Plants:</strong> We grow plants in local conditions, ensuring higher survival rates when transplanted.</li>
+      <li><strong>Large Scale Supply:</strong> Ability to supply hundreds of mature trees and thousands of shrubs for mega-projects.</li>
+      <li><strong>Diverse Collection:</strong> Exotic indoor species, native shade trees, palms, creepers, and seasonal flowers.</li>
+    </ul>
+    <p>By controlling the supply chain from seed to installation, we guarantee the highest quality of plant material for our clients.</p>`
+  },
+  'service-training': {
+    title: 'Workforce Training',
+    subtitle: 'In-house training on skill development, safety, industrial environment, personal hygiene, and discipline.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/ppt-assets/ppt-image-09.jpg',
+    html: `<p>A skilled and disciplined workforce is essential for delivering high-quality landscape services. We invest heavily in training our personnel, ensuring they meet the standards required by corporate and institutional clients.</p>
+    <h3>Training Modules</h3>
+    <ul>
+      <li><strong>Horticultural Skills:</strong> Plant identification, proper pruning techniques, and chemical handling.</li>
+      <li><strong>Industrial Safety:</strong> Use of PPE (Personal Protective Equipment), ladder safety, and hazard identification.</li>
+      <li><strong>Soft Skills & Hygiene:</strong> Professional conduct on client premises and maintaining personal cleanliness.</li>
+    </ul>
+    <p>Our commitment to training results in a reliable, efficient, and professional team that respects client protocols and delivers exceptional work.</p>`
+  },
+  'service-compliance': {
+    title: 'Compliance Focus',
+    subtitle: 'Adherence to major statutory compliances in employment of workers.',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/picture1.jpg',
+    html: `<p>Partnering with a service provider should never expose your organization to legal or compliance risks. The Primrose Path operates with strict adherence to all labor laws and statutory regulations.</p>
+    <h3>Our Compliance Commitments</h3>
+    <ul>
+      <li><strong>Statutory Benefits:</strong> 100% compliance with PF (Provident Fund), ESI (Employee State Insurance), and minimum wage regulations.</li>
+      <li><strong>Legal Documentation:</strong> Valid labor licenses, GST registrations, and regular audit clearances.</li>
+      <li><strong>Ethical Employment:</strong> No child labor, fair working hours, and safe working conditions for all staff.</li>
+    </ul>
+    <p>Our transparent and compliant operations have made us the trusted choice for multinational corporations, government bodies, and premier educational institutions.</p>`
+  }
+};
+
+// Generate data for NASA plants dynamically
+airPlants.forEach((p, i) => {
+  articlesData['plant-' + i] = {
+    title: p[0],
+    subtitle: p[1],
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/indoor-plants-images-broucher-p07-01.jpg', // Placeholder lush indoor plant image
+    html: `<p>${p[2]}</p>
+    <h3>Why it's great</h3>
+    <p>This plant was specifically highlighted in the NASA Clean Air Study for its ability to filter indoor pollutants such as formaldehyde, benzene, and trichloroethylene. It is an excellent choice for improving the air quality in enclosed office spaces or modern homes.</p>
+    <h3>Care Instructions</h3>
+    <ul>
+      <li>Keep away from direct, harsh sunlight to prevent leaf burn.</li>
+      <li>Water moderately, allowing the top layer of soil to dry out between waterings.</li>
+      <li>Wipe the leaves occasionally to keep the pores open for optimal air purification.</li>
+    </ul>`
+  };
+});
+
+function openArticle(id) {
+  const data = articlesData[id];
+  if(!data) return;
+  
+  // Track which page we came from to handle 'back' correctly
+  const activePage = document.querySelector('.page.active');
+  if(activePage && activePage.id !== 'page-article') {
+    lastPageBeforeArticle = activePage.id.replace('page-', '');
+  }
+
+  document.getElementById('article-title').textContent = data.title;
+  document.getElementById('article-subtitle').textContent = data.subtitle;
+  document.getElementById('article-img').src = data.img;
+  document.getElementById('article-content').innerHTML = data.html;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-article').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  
+  window.scrollTo({top:0, behavior: 'smooth'});
+}
+
+function historyBackFromArticle() {
+  showPage(lastPageBeforeArticle);
+}
 
 // ===== INIT LUCIDE ICONS =====
 lucide.createIcons();
