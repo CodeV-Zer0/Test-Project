@@ -1282,7 +1282,7 @@ const articlesData = {
   'service-landscapes': {
     title: 'Landscape Gardens',
     subtitle: 'Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/landscape2.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/james-lewis-JttEP3_JZXw-unsplash.jpg',
     html: `<p>A well-designed landscape is more than just plants—it is the integration of nature into the built environment. At The Primrose Path, we approach landscape design with a deep understanding of local ecology, soil conditions, and architectural harmony.</p>
     <h3>Our Process</h3>
     <ul>
@@ -1295,7 +1295,7 @@ const articlesData = {
   'service-indoor': {
     title: 'Indoor Potted Plants',
     subtitle: 'Indoor plant supply and placement for offices, lobbies, reception areas, and workspaces.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/nursery.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/vadim-kaipov-8ZELrodSvTc-unsplash.jpg',
     html: `<p>Indoor plants breathe life into enclosed spaces. They reduce stress, boost productivity, and improve air quality by filtering out volatile organic compounds (VOCs) commonly found in modern buildings.</p>
     <h3>What We Provide</h3>
     <ul>
@@ -1308,7 +1308,7 @@ const articlesData = {
   'service-maintenance': {
     title: 'Maintenance',
     subtitle: 'Landscape and plant maintenance with trained teams and regular care schedules.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/maintenance.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/crystal-jo-PKcTuA_CRAo-unsplash.jpg',
     html: `<p>A beautiful garden requires consistent, professional care. Our maintenance services ensure that your landscapes and indoor plants remain lush, healthy, and visually stunning throughout the year.</p>
     <h3>Maintenance Operations Include</h3>
     <ul>
@@ -1322,7 +1322,7 @@ const articlesData = {
   'service-nursery': {
     title: 'Nursery Support',
     subtitle: 'Plant sourcing from nursery operations in Dharwad, Kadiyam and Proddutur Village.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/dex-ezekiel-uwb7Mbj2Bmo-unsplash.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/www-zanda-photography-RBdE3jv5y68-unsplash.jpg',
     html: `<p>The backbone of our landscape and indoor plant services is our robust nursery infrastructure. With operational bases in Dharwad (Karnataka), Kadiyam (Andhra Pradesh), and Proddutur Village (Telangana), we cultivate and source a vast variety of flora.</p>
     <h3>Our Nursery Advantage</h3>
     <ul>
@@ -1335,7 +1335,7 @@ const articlesData = {
   'service-training': {
     title: 'Workforce Training',
     subtitle: 'In-house training on skill development, safety, industrial environment, personal hygiene, and discipline.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/workforce2.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/fraem-gmbh-LVJnIiIeyO0-unsplash.jpg',
     html: `<p>A skilled and disciplined workforce is essential for delivering high-quality landscape services. We invest heavily in training our personnel, ensuring they meet the standards required by corporate and institutional clients.</p>
     <h3>Training Modules</h3>
     <ul>
@@ -1348,7 +1348,7 @@ const articlesData = {
   'service-compliance': {
     title: 'Compliance Focus',
     subtitle: 'Adherence to major statutory compliances in employment of workers.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/compliance.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/aleksi-partanen-PUBqlZ-0_qE-unsplash.jpg',
     html: `<p>Partnering with a service provider should never expose your organization to legal or compliance risks. The Primrose Path operates with strict adherence to all labor laws and statutory regulations.</p>
     <h3>Our Compliance Commitments</h3>
     <ul>
@@ -1365,7 +1365,6 @@ airPlants.forEach((p, i) => {
   articlesData['plant-' + i] = {
     title: p[0],
     subtitle: p[1],
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/indoor-plants-images-broucher-p07-01.jpg', // Placeholder lush indoor plant image
     html: `<p>${p[2]}</p>
     <h3>Why it's great</h3>
     <p>This plant was specifically highlighted in the NASA Clean Air Study for its ability to filter indoor pollutants such as formaldehyde, benzene, and trichloroethylene. It is an excellent choice for improving the air quality in enclosed office spaces or modern homes.</p>
@@ -1390,8 +1389,15 @@ function openArticle(id) {
 
   document.getElementById('article-title').textContent = data.title;
   document.getElementById('article-subtitle').textContent = data.subtitle;
-  document.getElementById('article-img').src = data.img;
   document.getElementById('article-content').innerHTML = data.html;
+
+  const heroEl = document.querySelector('.article-hero');
+  if (data.img) {
+    heroEl.style.display = 'block';
+    document.getElementById('article-img').src = data.img;
+  } else {
+    heroEl.style.display = 'none';
+  }
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-article').classList.add('active');
