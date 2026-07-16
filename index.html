@@ -229,11 +229,12 @@ button,input,textarea,select{font-family:inherit}
 }
 .marquee-track:hover{animation-play-state:paused}
 .marquee-item{
-  flex-shrink:0;height:70px;display:flex;align-items:center;justify-content:center;
-  filter:brightness(0) invert(1);opacity:.55;transition:all var(--transition);padding:0 8px;
+  flex-shrink:0;height:80px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.95);border-radius:var(--radius);padding:12px 18px;
+  transition:all var(--transition);
 }
-.marquee-item:hover{opacity:1;transform:scale(1.08)}
-.marquee-item img{max-height:60px;max-width:140px;object-fit:contain}
+.marquee-item:hover{transform:scale(1.06);box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.marquee-item img{max-height:56px;max-width:130px;object-fit:contain}
 
 /* ===== SHOP HERO ===== */
 .shop-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.86fr);min-height:calc(100vh - 72px)}
