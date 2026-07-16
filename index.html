@@ -13,6 +13,11 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <title>The Primrose Path & Pragati Gardens</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark-mode');
+  }
+</script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
 /* ===== RESET & DESIGN SYSTEM ===== */
@@ -29,6 +34,15 @@
   --radius:12px;--radius-lg:16px;--radius-xl:24px;
   --font-display:'Playfair Display',serif;--font-body:'DM Sans',sans-serif;
   --transition:0.3s cubic-bezier(.4,0,.2,1);
+}
+:root.dark-mode {
+  --ink:#f8f9f6;--text:#dce3db;--muted:#a3b8ad;--line:#2a3c30;
+  --paper:#0f1a14;--white:#1a2c22;
+  --leaf-light:#145e3c;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --shadow-md:0 8px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.5);
+  --shadow-xl:0 24px 64px rgba(0,0,0,.6);
 }
 html{scroll-behavior:smooth}
 body{font-family:var(--font-body);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
@@ -85,6 +99,9 @@ button,input,textarea,select{font-family:inherit}
 .nav-tab:hover{color:var(--ink)}
 .nav-tab.active{color:var(--leaf);border-bottom-color:var(--leaf)}
 .nav.scrolled .nav-tab{height:64px}
+.theme-toggle{background:transparent;border:none;color:var(--ink);cursor:pointer;padding:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+.theme-toggle:hover{background:rgba(15,26,20,.05)}
+:root.dark-mode .theme-toggle:hover{background:rgba(255,255,255,.1)}
 
 /* ===== PAGE TRANSITIONS ===== */
 .page{display:none;min-height:calc(100vh - 72px)}
@@ -573,6 +590,9 @@ footer .footer-logo:hover{opacity:1}
     <div class="nav-tab" onclick="showPage('customers')">Customers</div>
     <div class="nav-tab" onclick="showPage('reviews')">Reviews</div>
   </div>
+  <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+    <i data-lucide="moon" id="theme-icon"></i>
+  </button>
 </nav>
 
 <!-- ==================== PROFILE PAGE ==================== -->
@@ -1401,6 +1421,23 @@ function openArticle(id) {
 function historyBackFromArticle() {
   showPage(lastPageBeforeArticle);
 }
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark-mode');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  const iconEl = document.getElementById('theme-icon');
+  if(iconEl) {
+    iconEl.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+    lucide.createIcons();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.documentElement.classList.contains('dark-mode')) {
+    const iconEl = document.getElementById('theme-icon');
+    if (iconEl) iconEl.setAttribute('data-lucide', 'sun');
+  }
+});
 
 // ===== INIT LUCIDE ICONS =====
 lucide.createIcons();
