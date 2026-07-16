@@ -111,12 +111,12 @@ button,input,textarea,select{font-family:inherit}
   padding:48px clamp(22px,5vw,72px) 56px;color:#fff;
 }
 .hero-mark{
-  width:min(300px,72vw);background:rgba(255,255,255,.95);border-radius:var(--radius);
-  padding:10px 16px;margin-bottom:24px;
-  box-shadow:var(--shadow-lg);backdrop-filter:blur(8px);
+  width:min(300px,72vw);margin-bottom:24px;
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow-lg);
   animation:scaleIn .8s ease both;
 }
-.hero-mark img{width:100%;height:auto;mix-blend-mode:multiply}
+.hero-mark img{width:100%;height:auto;display:block}
 .eyebrow{
   font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
   color:rgba(200,230,210,.9);margin-bottom:14px;
@@ -1282,7 +1282,7 @@ const articlesData = {
   'service-landscapes': {
     title: 'Landscape Gardens',
     subtitle: 'Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/profile-p-p01-01.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/landscape2.jpg',
     html: `<p>A well-designed landscape is more than just plants—it is the integration of nature into the built environment. At The Primrose Path, we approach landscape design with a deep understanding of local ecology, soil conditions, and architectural harmony.</p>
     <h3>Our Process</h3>
     <ul>
@@ -1295,7 +1295,7 @@ const articlesData = {
   'service-indoor': {
     title: 'Indoor Potted Plants',
     subtitle: 'Indoor plant supply and placement for offices, lobbies, reception areas, and workspaces.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/image-4.png',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/nursery.jpg',
     html: `<p>Indoor plants breathe life into enclosed spaces. They reduce stress, boost productivity, and improve air quality by filtering out volatile organic compounds (VOCs) commonly found in modern buildings.</p>
     <h3>What We Provide</h3>
     <ul>
@@ -1308,7 +1308,7 @@ const articlesData = {
   'service-maintenance': {
     title: 'Maintenance',
     subtitle: 'Landscape and plant maintenance with trained teams and regular care schedules.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/pdf-extracted/profile-p-p01-05.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/maintenance.jpg',
     html: `<p>A beautiful garden requires consistent, professional care. Our maintenance services ensure that your landscapes and indoor plants remain lush, healthy, and visually stunning throughout the year.</p>
     <h3>Maintenance Operations Include</h3>
     <ul>
@@ -1335,7 +1335,7 @@ const articlesData = {
   'service-training': {
     title: 'Workforce Training',
     subtitle: 'In-house training on skill development, safety, industrial environment, personal hygiene, and discipline.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/ppt-assets/ppt-image-09.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/workforce2.jpg',
     html: `<p>A skilled and disciplined workforce is essential for delivering high-quality landscape services. We invest heavily in training our personnel, ensuring they meet the standards required by corporate and institutional clients.</p>
     <h3>Training Modules</h3>
     <ul>
@@ -1348,7 +1348,7 @@ const articlesData = {
   'service-compliance': {
     title: 'Compliance Focus',
     subtitle: 'Adherence to major statutory compliances in employment of workers.',
-    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/picture1.jpg',
+    img: 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/service-assests/compliance.jpg',
     html: `<p>Partnering with a service provider should never expose your organization to legal or compliance risks. The Primrose Path operates with strict adherence to all labor laws and statutory regulations.</p>
     <h3>Our Compliance Commitments</h3>
     <ul>
