@@ -102,6 +102,28 @@ async function verifyAdminSession(){
   <div class="tab" onclick="switchTab('customers')">🏢 Customers</div>
   <div class="tab" onclick="switchTab('offers')">🏷️ Offers</div>
   <div class="tab" onclick="switchTab('reviews')">⭐ Reviews</div>
+  <div class="tab" onclick="switchTab('orders')">📦 Orders</div>
+</div>
+
+<!-- ===== ORDERS ===== -->
+<div id="section-orders" class="section">
+  <div class="card">
+    <h2>📦 Customer Orders</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Order ID</th>
+            <th>Total</th>
+            <th>Items</th>
+            <th>Address</th>
+          </tr>
+        </thead>
+        <tbody id="orders-table"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ===== PLANTS ===== -->
@@ -327,7 +349,7 @@ function authHeaders(){
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  const map={plants:0,group:1,landscapes:2,customers:3,offers:4,reviews:5};
+  const map={plants:0,group:1,landscapes:2,customers:3,offers:4,reviews:5,orders:6};
   document.querySelectorAll('.tab')[map[name]].classList.add('active');
   document.getElementById('section-'+name).classList.add('active');
   if(name==='plants') loadPlants();
@@ -336,6 +358,37 @@ function switchTab(name){
   if(name==='customers') loadGallery('customers');
   if(name==='offers') loadOffers();
   if(name==='reviews') loadReviews();
+  if(name==='orders') loadOrders();
+}
+
+// ===== ORDERS =====
+async function loadOrders(){
+  try {
+    const res = await fetch(BASE+'/orders', { credentials: 'include' });
+    const data = await res.json();
+    if(data.success){
+      const tbody = document.getElementById('orders-table');
+      if(!data.orders || data.orders.length===0){
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">No orders found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.orders.map(o => `
+        <tr>
+          <td><div style="font-size:12px;color:#888">${new Date(o.created_at).toLocaleString()}</div></td>
+          <td><div style="font-size:11px;font-family:monospace;color:#555">${o.razorpay_order_id}</div><div style="font-size:10px;color:#aaa">${o.razorpay_payment_id}</div></td>
+          <td><strong>₹${o.total}</strong><div style="font-size:10px;color:#888">(Fee: ₹${o.transport_fee})</div></td>
+          <td>
+            <div style="max-height:80px;overflow-y:auto;font-size:11px;line-height:1.4">
+              ${o.cart_items ? o.cart_items.map(item => `• ${item.name} (x${item.qty})`).join('<br>') : ''}
+            </div>
+          </td>
+          <td><div style="font-size:11px;max-width:200px;white-space:pre-wrap">${o.address}</div></td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 // ===== PLANT PHOTO PREVIEW =====

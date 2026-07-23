@@ -491,6 +491,21 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+app.get('/api/orders', requireAuth, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        res.json({ success: true, orders: data });
+    } catch (err) {
+        console.error("Error fetching orders:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🌿 The Primrose Path server running on port ${PORT}`);
 });
