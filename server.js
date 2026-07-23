@@ -483,6 +483,14 @@ app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html"))
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
 app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
+// DEBUG ENDPOINT TO SEE WHAT RENDER SEES
+app.get('/api/debug-env', (req, res) => {
+  res.json({ 
+    message: "Here are all the environment variable NAMES currently loaded in Node on Render:", 
+    keys: Object.keys(process.env).sort() 
+  });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🌿 The Primrose Path server running on port ${PORT}`);
 });
