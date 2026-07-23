@@ -221,6 +221,39 @@ async function deleteFromSupabase(publicUrl) {
 }
 
 // ====================== AUTH ======================
+const Razorpay = require('razorpay');
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+app.post('/api/checkout/create-order', async (req, res) => {
+  const total = Number(req.body.total);
+  if(!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET){
+    return res.status(500).json({ error: 'Payment gateway is not configured' });
+  }
+  if(!Number.isFinite(total) || total <= 0){
+    return res.status(400).json({ error: 'Invalid order total' });
+  }
+  try{
+    const order = await razorpay.orders.create({ amount: Math.round(total * 100), currency: 'INR', receipt: 'order_' + Date.now() });
+    res.json({ ...order, keyId: process.env.RAZORPAY_KEY_ID });
+  }catch(e){
+    res.status(500).json({ error: 'Could not create payment order' });
+  }
+});
+
+app.post('/api/checkout/verify', async (req, res) => {
+  const crypto = require('crypto');
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, cart, address, total } = req.body;
+  const transportFee = Number(req.body.transportFee || 0);
+  const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(razorpay_order_id + '|' + razorpay_payment_id).digest('hex');
+  if(expected !== razorpay_signature) return res.status(400).json({ success:false });
+  await supabase.from('orders').insert({ cart_items: cart, address, transport_fee: transportFee, total, razorpay_order_id, razorpay_payment_id, status: 'paid' });
+  res.json({ success: true });
+});
 app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {

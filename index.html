@@ -25,6 +25,7 @@
 <title>Best Indoor Plants in Hyderabad | Landscape Architects | The Primrose Path & Pragati Gardens</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <meta name="color-scheme" id="color-scheme-meta" content="light">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   (function() {
     var saved = localStorage.getItem('theme');
@@ -36,7 +37,7 @@
     }
   })();
 </script>
-<!-- Inline SVG Icons (replaces full Lucide CDN for faster load) -->
+<!-- Inline SVG Icons -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
   <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
   <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
@@ -48,6 +49,7 @@
   <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
   <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
   <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="icon-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
 </svg>
 <style>
 /* ===== RESET & DESIGN SYSTEM ===== */
@@ -362,8 +364,11 @@ button,input,textarea,select{font-family:inherit}
 .detail-stat-val{font-size:14px;color:var(--ink);font-weight:500}
 .detail-care h3{font-family:var(--font-display);margin-bottom:10px;font-size:1.15rem}
 .detail-care p{line-height:1.75;color:var(--text);font-size:14px}
+.detail-qty-row{display:flex;align-items:center;gap:10px;margin-top:20px}
+.qty-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);transition:all var(--transition);flex-shrink:0}
+.qty-btn:hover{background:var(--leaf-light);border-color:var(--leaf)}
 .wa-order-btn{
-  width:100%;margin-top:22px;border:0;border-radius:999px;
+  width:100%;margin-top:12px;border:0;border-radius:999px;
   background:#25d366;color:#fff;font-weight:700;padding:14px;cursor:pointer;
   font-size:15px;transition:all var(--transition);
   box-shadow:0 4px 16px rgba(37,211,102,.25);
@@ -488,6 +493,20 @@ button,input,textarea,select{font-family:inherit}
 .chat-footer button:hover{background:var(--leaf-dark);transform:scale(1.05)}
 .chat-welcome{font-size:12px;color:var(--muted);text-align:center;padding:10px 0}
 
+/* ===== CART & CHECKOUT ===== */
+.cart-modal{
+  position:fixed;right:18px;left:auto;bottom:80px;width:380px;max-width:90vw;
+  background:var(--paper);border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-xl);overflow:hidden;display:none;z-index:1000;
+  border:1px solid var(--line);animation:slideUp .3s ease;
+}
+.cart-item-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.cart-item-row img{width:44px;height:44px;object-fit:cover;border-radius:8px;background:#eef2eb;flex-shrink:0}
+.cart-qty-btn{border:none;background:var(--paper);width:26px;height:26px;border-radius:50%;cursor:pointer;flex-shrink:0}
+.checkout-input {width: 100%; border: 1px solid var(--line); background: var(--white); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 14px; color: var(--ink); outline: none; font-family: var(--font-body); transition: border-color var(--transition);}
+.checkout-input:focus {border-color: var(--leaf);}
+.checkout-input::placeholder {color: var(--muted);}
+
 /* ===== IMAGE MODAL ===== */
 .image-modal{
   position:fixed;inset:0;display:none;align-items:center;justify-content:center;
@@ -594,6 +613,7 @@ footer .footer-logo:hover{opacity:1}
   .plant-card-img{height:150px}
   .chat-button{padding:12px 16px;font-size:13px}
   .back-to-top{right:14px;bottom:14px;width:38px;height:38px;font-size:15px}
+  .cart-modal{right:10px;width:92vw}
 }
 </style>
 </head>
@@ -615,6 +635,41 @@ footer .footer-logo:hover{opacity:1}
   <div class="chat-footer">
     <input id="chat-input" placeholder="Type your question..." />
     <button id="chat-send" type="button">➤</button>
+  </div>
+</div>
+
+<!-- CART -->
+<div id="cart-modal" class="cart-modal" role="dialog" aria-label="Shopping Bag">
+  <div class="chat-header">
+    <div>Your Bag</div>
+    <button class="chat-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div id="cart-items" class="chat-body" style="max-height:320px"></div>
+  <div style="padding:14px;border-top:1px solid var(--line);background:var(--white)">
+    <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px">
+      <span>Subtotal</span><strong id="cart-subtotal">₹0</strong>
+    </div>
+    <button class="btn green" style="width:100%;justify-content:center" onclick="showCheckoutForm()">Checkout</button>
+  </div>
+</div>
+
+<!-- CHECKOUT FORM MODAL -->
+<div id="checkout-modal" class="cart-modal" role="dialog" aria-label="Delivery Details">
+  <div class="chat-header">
+    <div>Delivery Details</div>
+    <button class="chat-close" onclick="closeCheckoutForm()">✕</button>
+  </div>
+  <div class="chat-body">
+    <input type="text" id="chk-name" class="checkout-input" placeholder="First Name & Last Name" required>
+    <input type="tel" id="chk-phone" class="checkout-input" placeholder="Phone Number" required>
+    <textarea id="chk-address" class="checkout-input" placeholder="Complete Address (Apartment, Street, Area, Landmark)" style="min-height:80px;resize:vertical" required></textarea>
+    <div style="display:flex;gap:10px">
+      <input type="text" id="chk-city" class="checkout-input" placeholder="City" value="Hyderabad" style="flex:1" required>
+      <input type="text" id="chk-pincode" class="checkout-input" placeholder="PIN Code" style="flex:1" required>
+    </div>
+  </div>
+  <div style="padding:14px;border-top:1px solid var(--line);background:var(--white)">
+    <button class="btn green" style="width:100%;justify-content:center" onclick="processCheckout()">Continue to Payment</button>
   </div>
 </div>
 
@@ -640,6 +695,10 @@ footer .footer-logo:hover{opacity:1}
   <div class="nav-right" style="display:flex;align-items:center;gap:8px">
     <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
       <svg width="20" height="20"><use id="theme-icon-use" href="#icon-moon"/></svg>
+    </button>
+    <button id="cart-open" class="theme-toggle" onclick="toggleCart()" aria-label="Open Bag" style="position:relative">
+      <svg width="22" height="22"><use href="#icon-bag"/></svg>
+      <span id="cart-count" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--leaf);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 4px">0</span>
     </button>
     <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open navigation menu">
       <svg width="24" height="24"><use id="hamburger-icon-use" href="#icon-menu"/></svg>
@@ -849,6 +908,15 @@ footer .footer-logo:hover{opacity:1}
           <div class="detail-stat"><div class="detail-stat-label">Humidity</div><div class="detail-stat-val" id="detail-humidity"></div></div>
         </div>
         <div class="detail-care"><h3>Care tips</h3><p id="detail-care"></p></div>
+
+        <!-- QTY STEPPER + ADD TO CART -->
+        <div class="detail-qty-row">
+          <button onclick="changeDetailQty(-1)" class="qty-btn">-</button>
+          <span id="detail-qty" style="min-width:24px;text-align:center;font-weight:700">1</span>
+          <button onclick="changeDetailQty(1)" class="qty-btn">+</button>
+          <button class="btn green" style="flex:1;justify-content:center" onclick="addCurrentDetailToCart()">Add to Bag</button>
+        </div>
+
         <button class="wa-order-btn" id="detail-wa-btn">💬 Order via WhatsApp</button>
       </div>
     </div>
@@ -1148,12 +1216,8 @@ async function loadPlants(filter=''){
   }
 }
 
-function renderCatalog(filter=''){
-  const grid = document.getElementById('catalog-grid');
-  const query = (filter || '').toLowerCase();
-  const filtered = plants.filter(p => (p.name || '').toLowerCase().includes(query) || (p.sci || '').toLowerCase().includes(query) || (p.type || '').toLowerCase().includes(query));
-  if(!filtered.length){ grid.innerHTML = '<p style="color:var(--muted);padding:1rem">No plants found.</p>'; return; }
-  grid.innerHTML = filtered.map(p => `
+function plantCardHTML(p){
+  return `
     <div class="plant-card" onclick="showPlant(${p.id})">
       <div class="plant-card-img">${p.photo ? `<img src="${p.photo}" alt="${p.name}" class="zoomable" loading="lazy">` : `<div class="no-photo">🌿</div>`}</div>
       <div class="plant-card-body">
@@ -1161,7 +1225,15 @@ function renderCatalog(filter=''){
         <div class="plant-card-sci">${p.sci || ''}</div>
         <div class="plant-card-price">₹${p.price || '-'}<span class="avail-badge ${p.avail ? 'avail-yes' : 'avail-no'}">${p.avail ? 'In stock' : 'Sold out'}</span></div>
       </div>
-    </div>`).join('');
+    </div>`;
+}
+
+function renderCatalog(filter=''){
+  const grid = document.getElementById('catalog-grid');
+  const query = (filter || '').toLowerCase();
+  const filtered = plants.filter(p => (p.name || '').toLowerCase().includes(query) || (p.sci || '').toLowerCase().includes(query) || (p.type || '').toLowerCase().includes(query));
+  if(!filtered.length){ grid.innerHTML = '<p style="color:var(--muted);padding:1rem">No plants found.</p>'; return; }
+  grid.innerHTML = filtered.map(plantCardHTML).join('');
 }
 
 function filterPlants(val){
@@ -1188,15 +1260,7 @@ function filterPlants(val){
   });
   var grid = document.getElementById('catalog-grid');
   if(!filtered.length){ grid.innerHTML = '<p style="color:var(--muted);padding:1rem">No plants found.</p>'; return; }
-  grid.innerHTML = filtered.map(function(p){ return `
-    <div class="plant-card" onclick="showPlant(${p.id})">
-      <div class="plant-card-img">${p.photo ? `<img src="${p.photo}" alt="${p.name}" class="zoomable" loading="lazy" width="200" height="180">` : `<div class="no-photo">🌿</div>`}</div>
-      <div class="plant-card-body">
-        <div class="plant-card-name">${p.name}</div>
-        <div class="plant-card-sci">${p.sci || ''}</div>
-        <div class="plant-card-price">₹${p.price || '-'}<span class="avail-badge ${p.avail ? 'avail-yes' : 'avail-no'}">${p.avail ? 'In stock' : 'Sold out'}</span></div>
-      </div>
-    </div>`; }).join('');
+  grid.innerHTML = filtered.map(plantCardHTML).join('');
 }
 
 // ===== PLANT DETAIL =====
@@ -1206,6 +1270,10 @@ async function showPlant(id){
     if(!p){
       p = await fetch('/api/plants/'+id).then(r=>r.json());
     }
+    currentDetailPlant = p;
+    detailQty = 1;
+    document.getElementById('detail-qty').textContent = detailQty;
+
     document.getElementById('detail-photo-wrap').innerHTML = p.photo ? `<img src="${p.photo}" alt="${p.name}" class="zoomable">` : '<div class="no-photo" style="font-size:4rem">🌿</div>';
     document.getElementById('detail-name').textContent = p.name || '';
     document.getElementById('detail-sci').textContent = p.sci || '';
@@ -1371,6 +1439,131 @@ document.getElementById('chat-input').addEventListener('keydown', (e)=>{
 document.getElementById('chat-close').addEventListener('click', ()=>{
   document.getElementById('chat-modal').style.display = 'none';
 });
+
+// ===== CART =====
+let cart = JSON.parse(localStorage.getItem('primrose_cart') || '[]');
+let currentDetailPlant = null;
+let detailQty = 1;
+
+function saveCart(){ localStorage.setItem('primrose_cart', JSON.stringify(cart)); renderCart(); }
+
+function addToCart(id, name, price, photo, qty=1){
+  const existing = cart.find(c => c.id === id);
+  if(existing) existing.qty += qty;
+  else cart.push({id, name, price, photo, qty});
+  saveCart();
+}
+
+function addCurrentDetailToCart(){
+  if(!currentDetailPlant) return;
+  addToCart(currentDetailPlant.id, currentDetailPlant.name, currentDetailPlant.price, currentDetailPlant.photo, detailQty);
+}
+
+function updateQty(id, delta){
+  const item = cart.find(c => c.id === id);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) cart = cart.filter(c => c.id !== id);
+  saveCart();
+}
+
+function changeDetailQty(delta){
+  detailQty = Math.max(1, detailQty + delta);
+  document.getElementById('detail-qty').textContent = detailQty;
+}
+
+function renderCart(){
+  const count = cart.reduce((s,c) => s + c.qty, 0);
+  const countEl = document.getElementById('cart-count');
+  countEl.textContent = count;
+  countEl.style.display = count ? 'flex' : 'none';
+
+  const subtotal = cart.reduce((s,c) => s + c.qty * c.price, 0);
+  document.getElementById('cart-subtotal').textContent = '₹' + subtotal;
+
+  const itemsEl = document.getElementById('cart-items');
+  itemsEl.innerHTML = !cart.length ? '<p style="color:var(--muted);text-align:center;padding:20px">Bag is empty</p>' :
+    cart.map(c => `
+      <div class="cart-item-row">
+        <img src="${c.photo||''}" alt="${c.name}">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${c.name}</div>
+          <div style="font-size:12px;color:var(--muted)">₹${c.price} × ${c.qty}</div>
+        </div>
+        <button onclick="updateQty(${c.id},-1)" class="cart-qty-btn">-</button>
+        <button onclick="updateQty(${c.id},1)" class="cart-qty-btn">+</button>
+      </div>`).join('');
+}
+
+function toggleCart(){
+  const m = document.getElementById('cart-modal');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+
+renderCart(); // call on page load
+
+// ===== CHECKOUT FLOW =====
+function showCheckoutForm(){
+  if(!cart.length){ alert('Your bag is empty.'); return; }
+  toggleCart();
+  document.getElementById('checkout-modal').style.display = 'block';
+}
+
+function closeCheckoutForm(){
+  document.getElementById('checkout-modal').style.display = 'none';
+}
+
+async function processCheckout(){
+  const name = document.getElementById('chk-name').value.trim();
+  const phone = document.getElementById('chk-phone').value.trim();
+  const address = document.getElementById('chk-address').value.trim();
+  const city = document.getElementById('chk-city').value.trim();
+  const pin = document.getElementById('chk-pincode').value.trim();
+
+  if(!name || !phone || !address || !city || !pin){
+    alert('Please fill all delivery details to continue.');
+    return;
+  }
+
+  const fullAddress = `${name} | ${phone} | ${address}, ${city} - ${pin}`;
+  closeCheckoutForm();
+
+  const subtotal = cart.reduce((s,c) => s + c.qty * c.price, 0);
+  const transportFee = 0; // Local delivery
+  const total = subtotal;
+
+  try{
+    if(!confirm(`Subtotal: ₹${subtotal}\nTotal: ₹${total}\n\nProceed to payment?`)) return;
+
+    const orderRes = await fetch('/api/checkout/create-order', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ cart, address: fullAddress, transportFee, total })
+    });
+    const order = await orderRes.json();
+    if(!orderRes.ok || order.error){ alert(order.error || 'Could not start payment.'); return; }
+
+    const rzp = new Razorpay({
+      key: order.keyId,
+      amount: order.amount,
+      currency: 'INR',
+      name: 'The Primrose Path',
+      order_id: order.id,
+      handler: async function(response){
+        await fetch('/api/checkout/verify', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ ...response, cart, address: fullAddress, transportFee, total })
+        });
+        cart = []; saveCart();
+        alert('Payment successful! We will confirm your order shortly.');
+      },
+      theme: { color: '#1b7a4e' }
+    });
+    rzp.open();
+  }catch(e){
+    alert('Checkout failed. Please try again or order via WhatsApp.');
+    console.error(e);
+  }
+}
 
 // ===== ARTICLES DATA & ROUTING =====
 let lastPageBeforeArticle = 'profile';
