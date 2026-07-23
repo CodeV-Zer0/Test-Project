@@ -234,8 +234,19 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 app.post('/api/checkout/create-order', async (req, res) => {
   const total = Number(req.body.total);
   if(!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET){
-    return res.status(500).json({ error: 'Payment gateway is not configured' });
+    const missing = [];
+    if (!process.env.RAZORPAY_KEY_ID) missing.push('RAZORPAY_KEY_ID');
+    if (!process.env.RAZORPAY_KEY_SECRET) missing.push('RAZORPAY_KEY_SECRET');
+    return res.status(500).json({ error: `Payment gateway is not configured. Missing: ${missing.join(', ')}` });
   }
+  
+  if (!razorpay) {
+      razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+      });
+  }
+
   if(!Number.isFinite(total) || total <= 0){
     return res.status(400).json({ error: 'Invalid order total' });
   }
