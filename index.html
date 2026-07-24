@@ -344,8 +344,10 @@ button,input,textarea,select{font-family:inherit}
 .avail-yes{background:var(--leaf-light);color:var(--leaf-dark)}
 :root.dark-mode .avail-yes{color:#fff}
 .avail-no{background:#fef0ec;color:#b5422c}
-.quick-add-btn{background:var(--leaf);border:none;color:var(--white);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s, background 0.2s;box-shadow:0 4px 10px rgba(0,0,0,0.1)}
+.quick-add-btn{background:var(--leaf);border:none;color:var(--white);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s, background 0.2s;box-shadow:0 4px 10px rgba(0,0,0,0.1);position:relative}
+.quick-add-btn::after{content:"Add to bag";position:absolute;bottom:115%;right:0;transform:translateY(10px);background:var(--text);color:var(--bg);padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
 .quick-add-btn:hover{background:var(--leaf-dark);transform:scale(1.05)}
+.quick-add-btn:hover::after{opacity:1;transform:translateY(0)}
 
 /* ===== PLANT DETAIL ===== */
 .detail-wrap{max-width:760px;margin:0 auto;padding:36px 18px}
