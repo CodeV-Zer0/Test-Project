@@ -1302,7 +1302,7 @@ async function showPlant(id){
     document.getElementById('page-detail').classList.add('active');
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
     window.scrollTo({top:0,behavior:'smooth'});
-  }catch(e){ alert('Could not load plant details.'); }
+  }catch(e){ customAlert('Could not load plant details.'); }
 }
 
 // ===== OFFERS =====
@@ -1349,7 +1349,7 @@ async function submitReview(){
   const name = document.getElementById('r-name').value.trim();
   const loc = document.getElementById('r-location').value.trim();
   const text = document.getElementById('r-text').value.trim();
-  if(!name || !text || !selectedRating){ alert('Please fill your name, review, and rating.'); return; }
+  if(!name || !text || !selectedRating){ customAlert('Please fill your name, review, and rating.'); return; }
   try{
     const res = await fetch('/api/reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,location:loc || 'Hyderabad',rating:selectedRating,text})});
     const data = await res.json();
@@ -1359,9 +1359,9 @@ async function submitReview(){
       document.getElementById('r-text').value = '';
       setRating(0);
       loadReviews();
-      alert('Thank you for your review.');
+      customAlert('Thank you for your review.');
     }
-  }catch(e){ alert('Error submitting review.'); }
+  }catch(e){ customAlert('Error submitting review.'); }
 }
 
 // ===== PLANT LIBRARY =====
@@ -1514,13 +1514,84 @@ renderCart(); // call on page load
 
 // ===== CHECKOUT FLOW =====
 function showCheckoutForm(){
-  if(!cart.length){ alert('Your bag is empty.'); return; }
+  if(!cart.length){ customAlert('Your bag is empty.'); return; }
   toggleCart();
   document.getElementById('checkout-modal').style.display = 'block';
 }
 
 function closeCheckoutForm(){
   document.getElementById('checkout-modal').style.display = 'none';
+}
+
+function customConfirm(title, message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.background = 'rgba(0,0,0,0.7)';
+    modal.style.zIndex = '99999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'flex-start';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '80px 20px 20px 20px';
+    modal.innerHTML = `
+      <div style="background:var(--white); border-radius:16px; padding:32px 24px; width:100%; max-width:360px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.2); animation: dropDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)">
+        <div style="margin-bottom:16px; display:flex; justify-content:center; color:var(--leaf)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+            <line x1="3" x2="21" y1="6" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </div>
+        <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-bottom:12px;color:var(--text)">${title}</h3>
+        <p style="color:var(--muted);font-size:16px;margin-bottom:32px;line-height:1.6">${message.replace(/\n/g, '<br>')}</p>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button class="btn" style="background:transparent; border:1px solid var(--line); color:var(--text); flex:1; font-weight:500; justify-content:center" id="confirm-cancel">Cancel</button>
+          <button class="btn green" style="flex:1; font-weight:500; border:none; justify-content:center" id="confirm-ok">Pay Now</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('confirm-cancel').onclick = () => {
+      document.body.removeChild(modal);
+      resolve(false);
+    };
+    document.getElementById('confirm-ok').onclick = () => {
+      document.body.removeChild(modal);
+      resolve(true);
+    };
+  });
+}
+
+function customAlert(message, title = 'Notice') {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.background = 'rgba(0,0,0,0.7)';
+    modal.style.zIndex = '99999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'flex-start';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '80px 20px 20px 20px';
+    modal.innerHTML = `
+      <style>
+        @keyframes dropDown { from { transform: translateY(-40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      </style>
+      <div style="background:var(--white); border-radius:16px; padding:32px 24px; width:100%; max-width:320px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.2); animation: dropDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)">
+        <h3 style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:12px;color:var(--text)">${title}</h3>
+        <p style="color:var(--muted);font-size:15px;margin-bottom:32px;line-height:1.6">${message.replace(/\n/g, '<br>')}</p>
+        <button class="btn green" style="width:100%; justify-content:center; font-weight:500; border:none" id="alert-ok">OK</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('alert-ok').onclick = () => {
+      document.body.removeChild(modal);
+      resolve(true);
+    };
+  });
 }
 
 async function processCheckout(){
@@ -1531,7 +1602,7 @@ async function processCheckout(){
   const pin = document.getElementById('chk-pincode').value.trim();
 
   if(!name || !phone || !address || !city || !pin){
-    alert('Please fill all delivery details to continue.');
+    customAlert('Please fill all delivery details to continue.');
     return;
   }
 
@@ -1541,16 +1612,16 @@ async function processCheckout(){
   const subtotal = cart.reduce((s,c) => s + c.qty * c.price, 0);
   const transportFee = 0; // Local delivery
   const total = subtotal;
-
   try{
-    if(!confirm(`Subtotal: ₹${subtotal}\nTotal: ₹${total}\n\nProceed to payment?`)) return;
+    const isConfirmed = await customConfirm('Order Summary', `Subtotal: <strong>₹${subtotal}</strong><br>Total: <strong>₹${total}</strong>`);
+    if(!isConfirmed) return;
 
     const orderRes = await fetch('/api/checkout/create-order', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ cart, address: fullAddress, transportFee, total })
     });
     const order = await orderRes.json();
-    if(!orderRes.ok || order.error){ alert(order.error || 'Could not start payment.'); return; }
+    if(!orderRes.ok || order.error){ customAlert(order.error || 'Could not start payment.'); return; }
 
     const rzp = new Razorpay({
       key: order.keyId,
@@ -1564,13 +1635,13 @@ async function processCheckout(){
           body: JSON.stringify({ ...response, cart, address: fullAddress, transportFee, total })
         });
         cart = []; saveCart();
-        alert('Payment successful! We will confirm your order shortly.');
+        customAlert('Payment successful! We will confirm your order shortly.');
       },
       theme: { color: '#1b7a4e' }
     });
     rzp.open();
   }catch(e){
-    alert('Checkout failed. Please try again or order via WhatsApp.');
+    customAlert('Checkout failed. Please try again or order via WhatsApp.');
     console.error(e);
   }
 }
