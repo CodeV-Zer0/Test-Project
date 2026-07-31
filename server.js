@@ -231,6 +231,81 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
   });
 }
 
+app.post('/api/delivery-fee', async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    if (!lat || !lng) return res.status(400).json({ error: 'Missing coordinates' });
+
+    const apiKey = process.env.ORS_API_KEY;
+    const nLat = process.env.NURSERY_LAT;
+    const nLng = process.env.NURSERY_LNG;
+    
+    if (!apiKey || !nLat || !nLng) {
+      return res.status(500).json({ error: 'Routing API not configured.' });
+    }
+
+    // Calculate straight-line distance first (Haversine formula)
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // metres
+      const p1 = lat1 * Math.PI/180;
+      const p2 = lat2 * Math.PI/180;
+      const dp = (lat2-lat1) * Math.PI/180;
+      const dl = (lon2-lon1) * Math.PI/180;
+      const a = Math.sin(dp/2) * Math.sin(dp/2) +
+                Math.cos(p1) * Math.cos(p2) *
+                Math.sin(dl/2) * Math.sin(dl/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    const straightDistance = getDistance(parseFloat(nLat), parseFloat(nLng), parseFloat(lat), parseFloat(lng));
+
+    // If destination is within 500 meters straight line, ignore one-way traffic rules 
+    // and just charge based on straight line (likely walking/bike shortcut distance).
+    let distanceMeters;
+    
+    if (straightDistance < 500) {
+      distanceMeters = straightDistance;
+    } else {
+      // OpenRouteService expects coordinates as [longitude, latitude]
+      const body = JSON.stringify({
+        coordinates: [
+          [parseFloat(nLng), parseFloat(nLat)], 
+          [parseFloat(lng), parseFloat(lat)]
+        ]
+      });
+
+      const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
+        method: 'POST',
+      headers: {
+        'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+        'Authorization': apiKey,
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      body: body
+    });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        console.error('ORS API Error:', data);
+        return res.status(500).json({ error: 'Failed to calculate distance.' });
+      }
+      distanceMeters = data.routes[0].summary.distance;
+    }
+
+    const distanceKm = distanceMeters / 1000;
+    const displayDistance = parseFloat(distanceKm.toFixed(1));
+    
+    // Fee is ₹30 per km based on the displayed distance
+    const fee = Math.round(displayDistance * 30);
+
+    res.json({ distance: displayDistance.toFixed(1), fee });
+  } catch (error) {
+    console.error('Delivery fee error:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
 app.post('/api/checkout/create-order', async (req, res) => {
   const total = Number(req.body.total);
   if(!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET){
