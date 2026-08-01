@@ -260,6 +260,10 @@ app.post('/api/delivery-fee', async (req, res) => {
 
     const straightDistance = getDistance(parseFloat(nLat), parseFloat(nLng), parseFloat(lat), parseFloat(lng));
 
+    if (straightDistance > 45000) {
+      return res.status(400).json({ error: 'Sorry, we currently only deliver within Hyderabad (maximum 45 km radius).' });
+    }
+
     // If destination is within 500 meters straight line, ignore one-way traffic rules 
     // and just charge based on straight line (likely walking/bike shortcut distance).
     let distanceMeters;
@@ -288,14 +292,20 @@ app.post('/api/delivery-fee', async (req, res) => {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        console.error('ORS API Error:', data);
-        return res.status(500).json({ error: 'Failed to calculate distance.' });
+        console.warn('ORS API Error, falling back to straight-line distance:', data);
+        // Fallback to straight-line distance * 1.3 to estimate driving distance
+        distanceMeters = straightDistance * 1.3;
+      } else {
+        distanceMeters = data.routes[0].summary.distance;
       }
-      distanceMeters = data.routes[0].summary.distance;
     }
 
     const distanceKm = distanceMeters / 1000;
     const displayDistance = parseFloat(distanceKm.toFixed(1));
+    
+    if (displayDistance > 45) {
+      return res.status(400).json({ error: 'Sorry, we currently only deliver within Hyderabad (maximum 45 km radius).' });
+    }
     
     // Fee is ₹30 per km based on the displayed distance
     const fee = Math.round(displayDistance * 30);

@@ -1671,8 +1671,10 @@ async function calculateDeliveryFee() {
     const data = await res.json();
     if (res.ok) {
       currentTransportFee = data.fee;
-      document.getElementById('delivery-fee-display').innerText = `₹${data.fee} (${data.distance} km)`;
+      const feeDisplay = document.getElementById('delivery-fee-display');
+      feeDisplay.innerText = `₹${data.fee} (${data.distance} km)`;
       document.getElementById('btn-checkout').disabled = false;
+      feeDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       customAlert(data.error || 'Could not calculate fee.');
       btn.disabled = false;
