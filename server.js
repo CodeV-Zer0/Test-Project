@@ -26,7 +26,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KE
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'primrose-jwt-secret-2026';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 const JWT_MAX_AGE = process.env.JWT_MAX_AGE_MS ? parseInt(process.env.JWT_MAX_AGE_MS, 10) : 8 * 3600 * 1000;
 
