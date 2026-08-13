@@ -610,7 +610,28 @@ app.get("/sitemap.xml", async (req, res) => {
   <url><loc>https://www.walktheprimrosepath.com/group-arrangements</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/landscapes</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/offers</loc><priority>0.8</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/reviews</loc><priority>0.7</priority></url>`;
+  <url><loc>https://www.walktheprimrosepath.com/reviews</loc><priority>0.7</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/landscape-gardens</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/indoor-potted-plants</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/plant-maintenance</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/nursery-support</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/workforce-training</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/compliance-focus</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/aloe-vera</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/areca-palm</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/baby-rubber-plant</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/bamboo-palm</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/boston-fern</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/chinese-evergreen</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/corn-cane-mass-cane</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/english-ivy</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/golden-pothos</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/peace-lily</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/philodendron</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/snake-plant</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/spider-plant</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/warneckii</loc><priority>0.6</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/guide/weeping-fig</loc><priority>0.6</priority></url>`;
 
     if (plants) {
       plants.forEach(p => {
@@ -672,7 +693,37 @@ Object.keys(categories).forEach(route => {
     });
   });
 });
+const guideMeta = {
+  'landscape-gardens': { title: 'Landscape Garden Design | The Primrose Path', desc: 'Design, development, and execution of gardens for institutions, offices, and residences.' },
+  'indoor-potted-plants': { title: 'Indoor Potted Plants | The Primrose Path', desc: 'Indoor plant supply and placement for offices, lobbies, and workspaces in Hyderabad.' },
+  'plant-maintenance': { title: 'Landscape & Plant Maintenance | The Primrose Path', desc: 'Professional landscape and plant maintenance with trained teams and care schedules.' },
+  'nursery-support': { title: 'Nursery Support & Plant Sourcing | The Primrose Path', desc: 'Plant sourcing from nurseries in Dharwad, Kadiyam and Proddutur Village.' },
+  'workforce-training': { title: 'Workforce Training | The Primrose Path', desc: 'In-house training on horticultural skill development, safety, and discipline.' },
+  'compliance-focus': { title: 'Compliance Focus | The Primrose Path', desc: 'Statutory compliance in employment of workers across our operations.' }
+};
 
+app.get("/guide/:slug", (req, res) => {
+  const slug = req.params.slug;
+  const meta = guideMeta[slug];
+  const airPlantNames = ["aloe-vera","areca-palm","baby-rubber-plant","bamboo-palm","boston-fern","chinese-evergreen","corn-cane-mass-cane","english-ivy","golden-pothos","peace-lily","philodendron","snake-plant","spider-plant","warneckii","weeping-fig"];
+
+  if (meta) {
+    return servePageWithSEO(res, {
+      title: meta.title,
+      description: meta.desc,
+      url: `https://www.walktheprimrosepath.com/guide/${slug}`
+    });
+  }
+  if (airPlantNames.includes(slug)) {
+    const name = slug.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+    return servePageWithSEO(res, {
+      title: `${name} — Indoor Air Purifying Plant Guide | The Primrose Path`,
+      description: `Care guide for ${name}: watering, sunlight, and air-purifying benefits, based on the NASA Clean Air Study.`,
+      url: `https://www.walktheprimrosepath.com/guide/${slug}`
+    });
+  }
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 // Legacy backward compatibility
 app.get("/plant/:id", (req, res) => res.redirect("/plants"));
 
