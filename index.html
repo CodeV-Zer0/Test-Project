@@ -377,12 +377,19 @@ button,input,textarea,select{font-family:inherit}
 .detail-stat-val{font-size:14px;color:var(--ink);font-weight:500}
 .detail-care h3{font-family:var(--font-display);margin-bottom:10px;font-size:1.15rem}
 .detail-care p{line-height:1.75;color:var(--text);font-size:14px}
-.detail-qty-row{display:flex;align-items:center;gap:10px;margin-top:20px}
+.detail-purchase-row{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:nowrap}
+.detail-qty-row{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .qty-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);transition:all var(--transition);flex-shrink:0}
 .qty-btn:hover{background:var(--leaf-light);border-color:var(--leaf)}
+.detail-action-btn{
+  height:54px;min-height:54px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  text-align:center;white-space:nowrap;text-decoration:none;
+}
+.detail-add-btn{flex:1 1 220px}
 .wa-order-btn{
-  width:100%;margin-top:12px;border:0;border-radius:999px;
-  background:#25d366;color:#fff;font-weight:700;padding:14px;cursor:pointer;
+  flex:0 0 235px;margin-top:0;border:0;
+  background:#25d366;color:#fff;font-weight:700;padding:0 22px;cursor:pointer;
   font-size:15px;transition:all var(--transition);
   box-shadow:0 4px 16px rgba(37,211,102,.25);
 }
@@ -584,6 +591,11 @@ footer .footer-logo{
   margin-bottom:18px;display:block;opacity:.8;transition:opacity var(--transition);
 }
 footer .footer-logo:hover{opacity:1}
+.nav a,.nav a:visited,.nav a:hover,.nav a:focus,
+footer a,footer a:visited,footer a:hover,footer a:focus,
+.contact-list a,.contact-list a:visited,.contact-list a:hover,.contact-list a:focus{
+  text-decoration:none !important;
+}
 
 /* ===== ARTICLE PAGE ===== */
 .article-wrap{max-width:860px;margin:0 auto;padding:0 18px 56px}
@@ -619,6 +631,11 @@ footer .footer-logo:hover{opacity:1}
   .marquee-item{height:50px}
   .marquee-item img{max-height:44px;max-width:110px}
 }
+@media(max-width:700px){
+  .detail-purchase-row{flex-wrap:wrap}
+  .detail-qty-row{width:100%;justify-content:center}
+  .detail-action-btn{flex:1 1 calc(50% - 5px)}
+}
 @media(max-width:560px){
   .section{padding:36px 16px}
   .stat-grid,.detail-grid{grid-template-columns:1fr}
@@ -630,6 +647,9 @@ footer .footer-logo:hover{opacity:1}
   .chat-button{padding:12px 16px;font-size:13px}
   .back-to-top{right:14px;bottom:14px;width:38px;height:38px;font-size:15px}
   .cart-modal{right:10px;width:92vw}
+}
+@media(max-width:430px){
+  .detail-action-btn{flex-basis:100%}
 }
 </style>
 <script type="application/ld+json">
@@ -887,7 +907,7 @@ footer .footer-logo:hover{opacity:1}
       <h2>Plants, arrangements, and landscape support in one place.</h2>
       <p>Order available plants, ask for an office plant setup, request a group arrangement, or discuss landscape maintenance. The fastest route is WhatsApp, and the plant catalogue below stays connected to the website database.</p>
       <div class="hero-actions">
-        <a href="https://wa.me/919963334145?text=Hi!%20I%20want%20to%20order%20plants%20from%20The%20Primrose%20Path." target="_blank" rel="noopener" class="btn wa">💬 Order on WhatsApp</a>
+        <a href="https://wa.me/919959667133?text=Hi!%20I%20want%20to%20order%20plants%20from%20The%20Primrose%20Path." target="_blank" rel="noopener" class="btn wa">💬 Order on WhatsApp</a>
         <button class="btn green" onclick="showPage('plants')">Browse plants</button>
       </div>
     </div>
@@ -960,14 +980,15 @@ footer .footer-logo:hover{opacity:1}
         <div class="detail-care"><h3>Care tips</h3><p id="detail-care"></p></div>
 
         <!-- QTY STEPPER + ADD TO CART -->
-        <div class="detail-qty-row">
-          <button onclick="changeDetailQty(-1)" class="qty-btn">-</button>
-          <span id="detail-qty" style="min-width:24px;text-align:center;font-weight:700">1</span>
-          <button onclick="changeDetailQty(1)" class="qty-btn">+</button>
-          <button class="btn green" style="flex:1;justify-content:center" onclick="addCurrentDetailToCart()">Add to Bag</button>
+        <div class="detail-purchase-row">
+          <div class="detail-qty-row">
+            <button onclick="changeDetailQty(-1)" class="qty-btn">-</button>
+            <span id="detail-qty" style="min-width:24px;text-align:center;font-weight:700">1</span>
+            <button onclick="changeDetailQty(1)" class="qty-btn">+</button>
+          </div>
+          <button class="btn green detail-action-btn detail-add-btn" onclick="addCurrentDetailToCart()">Add to Bag</button>
+          <a href="#" id="detail-wa-btn" class="wa-order-btn detail-action-btn" target="_blank" rel="noopener">💬 Order via WhatsApp</a>
         </div>
-
-        <a href="#" id="detail-wa-btn" class="wa-order-btn" target="_blank" rel="noopener">💬 Order via WhatsApp</a>
 
         <!-- RELATED PLANTS -->
         <div id="related-plants-section" style="margin-top:28px;display:none">
@@ -1277,9 +1298,9 @@ async function loadPlants(filter=''){
 function slugify(text) {
   if (!text) return '';
   return text.toString().toLowerCase()
-    .replace(/\\s+/g, '-')
-    .replace(/[^\\w\\-]+/g, '')
-    .replace(/\\-\\-+/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 }
@@ -1376,7 +1397,7 @@ async function showPlant(id){
     const waBtn = document.getElementById('detail-wa-btn');
     if (waBtn) {
       const waMsg = encodeURIComponent('Hi! I saw ' + p.name + ' on your website. Is it available?');
-      waBtn.href = 'https://wa.me/919963334145?text=' + waMsg;
+      waBtn.href = 'https://wa.me/919959667133?text=' + waMsg;
     }
 
     // Related plants
@@ -2152,7 +2173,7 @@ showPage = function(name) {
         <div class="footer-contact">
           <div>📍 <a href="https://www.google.com/maps/search/?api=1&query=Sai+Brundavana+Apartments+202+Dwarakapuri+Colony+Punjagutta+Hyderabad+500082" target="_blank" rel="noopener">Sai Brundavana Apartments, 202, Dwarakapuri colony, Punjagutta, Hyderabad-500082, Telangana</a></div>
           <div>📞 <a href="tel:+919963334145">+91-9963334145</a> / <a href="tel:+919959667133">9959667133</a></div>
-          <div>📧 <a href="mailto:theprimrose@gmail.com">theprimrose@gmail.com</a></div>
+          <div>📧 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=theprimrose@gmail.com" target="_blank" rel="noopener">theprimrose@gmail.com</a></div>
           <div>🕐 Mon – Sat: 9:00 am – 6:00 pm</div>
         </div>
       </div>
@@ -2162,7 +2183,7 @@ showPage = function(name) {
         <p style="font-size:13px;line-height:1.85;margin-bottom:18px;color:rgba(255,255,255,.45)">
           The fastest way to reach us is WhatsApp. Ask about plants, landscaping, or maintenance.
         </p>
-        <a href="https://wa.me/919963334145?text=Hi!%20I%20visited%20The%20Primrose%20Path%20website%20and%20would%20like%20to%20get%20in%20touch." target="_blank" rel="noopener" class="btn wa">
+        <a href="https://wa.me/919959667133?text=Hi!%20I%20visited%20The%20Primrose%20Path%20website%20and%20would%20like%20to%20get%20in%20touch." target="_blank" rel="noopener" class="btn wa">
           💬 WhatsApp us
         </a>
         <a href="https://www.google.com/maps/search/?api=1&query=Sai+Brundavana+Apartments+202+Dwarakapuri+Colony+Punjagutta+Hyderabad+500082" target="_blank" rel="noopener" style="display:block;margin-top:12px;font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;">⭐ View us on Google Maps</a>
