@@ -656,6 +656,11 @@ footer a,footer a:visited,footer a:hover,footer a:focus,
 @media(max-width:430px){
   .detail-action-btn{flex-basis:100%}
 }
+/* When viewing the dedicated payment page, hide other homepage sections */
+/* Replace the existing rule */
+body.only-payment > *:not(#payment-root):not(.razorpay-container):not([class*="razorpay"]) {
+  display: none !important;
+}
 </style>
 <script type="application/ld+json">
 {
@@ -1880,6 +1885,18 @@ function customAlert(message, title = 'Notice') {
     };
   });
 }
+function isValidIndianPhone(phone) {
+  const cleaned = phone.replace(/\D/g, ''); // strip spaces, +91, dashes etc.
+  const last10 = cleaned.slice(-10);
+  return /^[6-9]\d{9}$/.test(last10); // Indian mobile numbers start 6-9, 10 digits
+}
+
+function validatePhoneField(input){
+  const errorEl = document.getElementById('phone-error');
+  const valid = isValidIndianPhone(input.value.trim());
+  errorEl.style.display = (input.value.trim() && !valid) ? 'block' : 'none';
+  input.style.borderColor = (input.value.trim() && !valid) ? '#e05252' : '';
+}
 
 async function processCheckout() {
   const name = document.getElementById('chk-name').value.trim();
@@ -1890,7 +1907,10 @@ async function processCheckout() {
     customAlert('Please fill out all delivery details.');
     return;
   }
-
+  if(!isValidIndianPhone(phone)){
+    customAlert('Please enter a valid 10-digit Indian mobile number.');
+    return;
+  }
   const fullAddress = `${name} | ${phone} | ${address}`;
 
   closeCheckoutForm();
@@ -1905,42 +1925,250 @@ async function processCheckout() {
       return;
     }
 
-    const orderRes = await fetch('/api/checkout/create-order', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ cart, address: fullAddress, transportFee, total })
-    });
-    const order = await orderRes.json();
-    if(!orderRes.ok || order.error){ customAlert(order.error || 'Could not start payment.'); return; }
+    // Save checkout data to sessionStorage and navigate to /payment to complete payment there
+    const checkoutData = { cart, address: fullAddress, transportFee, total };
+    try{ sessionStorage.setItem('primrose_checkout', JSON.stringify(checkoutData)); } catch(e) { console.warn('Could not save checkout to sessionStorage', e); }
+    // Navigate to payment route which will render a Pay Now page
+    window.location.href = '/payment';
+    return;
+  }catch(e){
+    customAlert('Checkout failed. Please try again or order via WhatsApp.');
+    console.error(e);
+  }
+}
 
-    const rzp = new Razorpay({
+function showThankYou() {
+  try{
+    history.replaceState({}, '', '/payment?status=success');
+  }catch(e){}
+  // Remove/hide modals and cart
+  const checkout = document.getElementById('checkout-modal'); if(checkout) checkout.style.display='none';
+  const cartModal = document.getElementById('cart-modal'); if(cartModal) cartModal.style.display='none';
+
+  // Create fresh thank you container (replace any existing payment-root)
+  const existing = document.getElementById('payment-root'); if(existing) existing.remove();
+  const container = document.createElement('section');
+  container.id = 'payment-root';
+  container.style.padding = '60px 20px';
+  container.style.minHeight = '60vh';
+  container.innerHTML = `
+    <div style="max-width:820px;margin:0 auto;text-align:center;">
+      <div style="display:inline-block;background:var(--white);padding:34px;border-radius:16px;box-shadow:var(--shadow-lg);max-width:720px;width:100%;color:var(--text)">
+        <h2 style="font-family:var(--font-display);font-size:1.8rem;color:var(--leaf);margin-bottom:8px">Thank you — payment successful</h2>
+        <p id="payment-success-msg" style="color:var(--text);line-height:1.7;margin-bottom:18px">Payment successful! We have received your payment and will confirm your order shortly. A confirmation message will be sent to your mobile number.</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:8px">
+          <a href="/plants" class="btn" style="background:transparent;border:1px solid var(--line);color:var(--text);text-decoration:none;">Continue Shopping</a>
+          <a href="/" class="btn green" style="text-decoration:none;">Return Home</a>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.classList.add('only-payment');
+  document.body.insertBefore(container, document.body.firstChild);
+  container.scrollIntoView({behavior:'smooth'});
+}
+
+// Payment page rendering and flow
+function showPaymentFailed(message){
+  try{ history.replaceState({}, '', '/payment?status=failed'); }catch(e){}
+  const checkout = document.getElementById('checkout-modal'); if(checkout) checkout.style.display='none';
+  const cartModal = document.getElementById('cart-modal'); if(cartModal) cartModal.style.display='none';
+  let container = document.getElementById('payment-root');
+  if(container) container.remove();
+  container = document.createElement('section');
+  container.id = 'payment-root';
+  container.style.padding = '60px 20px';
+  container.style.minHeight = '60vh';
+  container.innerHTML = `
+    <div style="max-width:820px;margin:0 auto;text-align:center;">
+      <div style="display:inline-block;background:var(--white);padding:34px;border-radius:16px;box-shadow:var(--shadow-lg);max-width:720px;width:100%;">
+        <h2 style="font-family:var(--font-display);font-size:1.8rem;color:#b5422c;margin-bottom:8px">Payment failed or cancelled</h2>
+        <p style="color:var(--text);line-height:1.7;margin-bottom:18px">${message || 'Your transaction was not completed. You can retry payment or return to your cart.'}</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:8px">
+          <button id="retry-pay" class="btn green">Retry Payment</button>
+          <a href="/plants" class="btn" style="background:transparent;border:1px solid var(--line);color:var(--text);text-decoration:none;">Return to Shop</a>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.classList.add('only-payment');
+  const existing = document.getElementById('payment-root'); if(existing) existing.remove();
+  document.body.insertBefore(container, document.body.firstChild);
+  document.getElementById('retry-pay').onclick = startPaymentFromPage;
+  container.scrollIntoView({behavior:'smooth'});
+}
+
+async function startPaymentFromPage(){
+  const raw = sessionStorage.getItem('primrose_checkout');
+  if(!raw){ customAlert('No checkout data found. Please complete delivery details and continue.'); return; }
+  const data = JSON.parse(raw);
+  const payBtn = document.getElementById('pay-now-btn');
+  if(payBtn){ payBtn.disabled = true; payBtn.innerText = 'Processing...'; }
+  try{
+    const orderRes = await fetch('/api/checkout/create-order', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if(!orderRes.ok){
+      const err = await orderRes.json().catch(()=>({ error: 'Could not start payment.' }));
+      customAlert(err.error || 'Could not start payment.');
+      return;
+    }
+    const order = await orderRes.json();
+    console.log('create-order response', order);
+    if(!order || !order.id || !order.keyId){ console.error('create-order missing fields', order); customAlert('Payment gateway is not configured or returned invalid data.'); return; }
+
+    const contact = (data.address || '').split('|')[1] ? (data.address.split('|')[1].trim()) : '';
+
+    const rzpOptions = {
       key: order.keyId,
       amount: order.amount,
       currency: 'INR',
       name: 'The Primrose Path',
       order_id: order.id,
+      prefill: { contact },
       handler: async function(response){
-        await fetch('/api/checkout/verify', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ ...response, cart, address: fullAddress, transportFee, total })
-        });
-        cart = []; saveCart();
-        customAlert('Payment successful! We will confirm your order shortly.');
+        try{
+          const verifyRes = await fetch('/api/checkout/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...response, ...data }) });
+          const verify = await verifyRes.json();
+          if(verifyRes.ok && verify && verify.success){
+            cart = []; saveCart();
+            try{ sessionStorage.removeItem('primrose_checkout'); }catch(e){}
+            showThankYou();
+          } else {
+            showPaymentFailed('Payment verification failed.');
+          }
+        }catch(e){ console.error(e); showPaymentFailed('Verification error.'); }
       },
       theme: { color: '#1b7a4e' },
-      modal: {
-        ondismiss: function() {
-          customAlert('Payment Failed / Cancelled.');
-        }
-      }
-    });
+      modal: { ondismiss: function(){ showPaymentFailed('Payment cancelled by user.'); } }
+    };
+    console.log('Razorpay options', rzpOptions);
+    const rzp = new Razorpay(rzpOptions);
+    // expose in window for manual debugging
+    try{ window.__razorpay_instance = rzp; }catch(e){}
     rzp.on('payment.failed', function (response){
-      customAlert('Payment Failed: ' + (response.error.description || 'Transaction cancelled by user.'));
+      showPaymentFailed(response.error && response.error.description ? response.error.description : 'Payment failed.');
     });
-    rzp.open();
-  }catch(e){
-    customAlert('Checkout failed. Please try again or order via WhatsApp.');
-    console.error(e);
+    try{
+      rzp.open();
+      console.log('rzp.open called');
+    }catch(err){
+      console.error('rzp.open error', err);
+      showPaymentFailed('Could not open payment gateway.');
+    }
+  }catch(e){ console.error(e); customAlert('Could not initiate payment.'); }
+  finally{ if(payBtn){ payBtn.disabled = false; payBtn.innerText = 'Pay Now'; } }
+}
+
+function renderPaymentPage(){
+  if(location.pathname !== '/payment') return;
+  const params = new URLSearchParams(location.search);
+  const status = params.get('status');
+  if(status === 'success'){ showThankYou(); return; }
+  if(status === 'failed'){ showPaymentFailed(); return; }
+
+  const raw = sessionStorage.getItem('primrose_checkout');
+  if(!raw){
+    const container = document.createElement('section');
+    container.id = 'payment-root';
+    container.style.padding='60px 20px'; container.style.textAlign='center';
+    container.innerHTML = `<div style="max-width:720px;margin:0 auto"><h2 style="font-family:var(--font-display);color:var(--leaf);">No checkout in progress</h2><p style="color:var(--text)">Please add items to your bag and complete delivery details before paying.</p><div style="margin-top:18px"><a href="/plants" class="btn">Continue Shopping</a></div></div>`;
+    document.body.classList.add('only-payment');
+    const existing = document.getElementById('payment-root'); if(existing) existing.remove();
+    document.body.insertBefore(container, document.body.firstChild);
+    return;
   }
+  const data = JSON.parse(raw);
+  const subtotal = data.cart.reduce((s,c) => s + c.qty * c.price, 0);
+  const container = document.createElement('section');
+  container.id = 'payment-root';
+  container.style.padding='40px 20px';
+  // inject payment-specific styles if not present
+  if(!document.getElementById('payment-inline-style')){
+    const s = document.createElement('style'); s.id = 'payment-inline-style';
+    s.innerHTML = `
+      .payment-root { padding:40px 20px; }
+      /* Force a light card appearance and readable text for payment UI */
+      .payment-card { max-width:980px;margin:0 auto;background:var(--white) !important;padding:28px;border-radius:14px;box-shadow:var(--shadow-sm); color:var(--text) !important; }
+      .payment-grid { display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start; }
+      .order-items { background:transparent;padding:6px;border-radius:8px;color:var(--text); }
+      .order-row { display:flex;justify-content:space-between;padding:10px 6px;border-bottom:1px dashed var(--line); }
+      .order-row .meta { max-width:68%; }
+      .breakdown { margin-top:16px;padding-top:10px;border-top:1px solid var(--line);font-weight:700 }
+      .delivery-box { background:var(--bg-muted, #fbfbfb) !important;padding:12px;border-radius:10px;color:var(--text) !important; }
+      .payment-actions { display:flex;gap:12px;align-items:center;justify-content:flex-end }
+      .btn-pill { padding:12px 22px;border-radius:30px }
+      .btn.green { background: linear-gradient(180deg,#2a7a48,#166033) !important; color:#fff !important; box-shadow: 0 6px 18px rgba(22,96,51,0.18); }
+      .order-row { border-color: var(--line) !important; }
+      /* Dark mode: make the card darker and page background dark */
+      /* Keep card light by default; dark-mode handling can be enabled later if desired */
+    `;
+    document.head.appendChild(s);
+  }
+
+  container.innerHTML = `
+    <div class="payment-root">
+      <div class="payment-card">
+        <h2 style="font-family:var(--font-display);color:var(--leaf);margin-bottom:12px">Complete Payment</h2>
+        <div class="payment-grid">
+          <div>
+            <h4 style="margin-bottom:10px;color:var(--muted);">Order summary</h4>
+            <div id="order-items" class="order-items"></div>
+            <div class="breakdown">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-weight:600;color:var(--muted)">Subtotal</span><span id="payment-sub">₹${subtotal}</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-weight:600;color:var(--muted)">Delivery</span><span id="payment-fee-inline">₹${data.transportFee || 0}</span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:1.2rem;color:var(--leaf)"><strong>Total</strong><strong id="payment-total">₹${data.total}</strong></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <h4 style="margin-bottom:10px;color:var(--muted);">Delivery details</h4>
+              <div class="delivery-box" id="payment-delivery-details" style="margin-bottom:12px;line-height:1.5;">${(data.address || '').replace(/\|/g,' - ')}</div>
+            </div>
+            <div class="payment-actions">
+              <button id="edit-order-btn" class="btn btn-pill" style="background:transparent;border:1px solid var(--line);color:var(--text)">Edit</button>
+              <button id="pay-now-btn" class="btn green btn-pill">Pay Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.classList.add('only-payment');
+  const existing = document.getElementById('payment-root'); if(existing) existing.remove();
+  document.body.insertBefore(container, document.body.firstChild);
+  document.getElementById('pay-now-btn').addEventListener('click', startPaymentFromPage);
+  const editBtn = document.getElementById('edit-order-btn'); if(editBtn) editBtn.addEventListener('click', () => editOrderFromPayment(data));
+  // populate order items list
+  try{
+    const listEl = document.getElementById('order-items');
+    if(listEl && Array.isArray(data.cart)){
+      listEl.innerHTML = data.cart.map(i => `<div style="display:flex;justify-content:space-between;padding:8px 6px;border-bottom:1px dashed var(--line)"><div><strong>${i.name}</strong><div style="font-size:13px;color:var(--muted)">Qty: ${i.qty}</div></div><div style="font-weight:700;color:var(--leaf)">₹${i.price * i.qty}</div></div>`).join('');
+    }
+  }catch(e){ console.warn('populate items failed', e); }
+  container.scrollIntoView({behavior:'smooth'});
+}
+
+document.addEventListener('DOMContentLoaded', renderPaymentPage);
+
+function editOrderFromPayment(data){
+  // Open the delivery details modal and prefill fields from checkout data
+  const raw = sessionStorage.getItem('primrose_checkout');
+  const checkout = raw ? JSON.parse(raw) : data;
+  if(!checkout){ customAlert('No checkout data found to edit.'); return; }
+  const parts = (checkout.address || '').split('|').map(s=>s.trim());
+  const name = parts[0] || '';
+  const phone = parts[1] || '';
+  const addr = parts.slice(2).join(' | ') || '';
+  // populate modal fields
+  const nameEl = document.getElementById('chk-name');
+  const phoneEl = document.getElementById('chk-phone');
+  const addrEl = document.getElementById('chk-address');
+  if(nameEl) nameEl.value = name;
+  if(phoneEl) phoneEl.value = phone;
+  if(addrEl) addrEl.value = addr;
+  // close payment-only view and show checkout modal
+  document.body.classList.remove('only-payment');
+  const pr = document.getElementById('payment-root'); if(pr) pr.remove();
+  showCheckoutForm();
 }
 
 // ===== ARTICLES DATA & ROUTING =====

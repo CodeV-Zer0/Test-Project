@@ -611,6 +611,7 @@ app.get("/sitemap.xml", async (req, res) => {
   <url><loc>https://www.walktheprimrosepath.com/landscapes</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/offers</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/reviews</loc><priority>0.7</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/payment</loc><priority>0.9</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/landscape-gardens</loc><priority>0.6</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/indoor-potted-plants</loc><priority>0.6</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/plant-maintenance</loc><priority>0.6</priority></url>
@@ -731,6 +732,15 @@ app.get("/plant/:id", (req, res) => res.redirect("/plants"));
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
+
+// Payment page route (single-page app uses index.html but we provide SEO)
+app.get('/payment', (req, res) => {
+  servePageWithSEO(res, {
+    title: 'Payment — The Primrose Path',
+    description: 'Secure payment processing for your Primrose Path order.',
+    url: 'https://www.walktheprimrosepath.com/payment'
+  });
+});
 
 // DEBUG ENDPOINT TO SEE WHAT RENDER SEES
 app.get('/api/debug-env', (req, res) => {
