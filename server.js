@@ -599,8 +599,9 @@ async function servePageWithSEO(res, options) {
 }
 
 // Sitemap
+// Sitemap
 app.get("/sitemap.xml", async (req, res) => {
-    const { data: plants } = await supabase.from('plants').select('name').eq('avail', true);
+    const { data: plants } = await supabase.from('plants').select('name');
     
     let urls = `
   <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
@@ -613,7 +614,8 @@ app.get("/sitemap.xml", async (req, res) => {
 
     if (plants) {
       plants.forEach(p => {
-        urls += `\\n  <url><loc>https://www.walktheprimrosepath.com/plants/${slugify(p.name)}</loc><priority>0.8</priority></url>`;
+        urls += `
+  <url><loc>https://www.walktheprimrosepath.com/plants/${slugify(p.name)}</loc><priority>0.8</priority></url>`;
       });
     }
 
