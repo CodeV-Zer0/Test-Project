@@ -552,21 +552,132 @@ app.delete("/api/reviews/:id", requireAuth, async (req, res) => {
     res.json({ success: true });
 });
 
+// ===== SEO & ROUTING HELPERS =====
+function slugify(text) {
+  if (!text) return '';
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+async function servePageWithSEO(res, options) {
+  const indexPath = path.join(__dirname, 'index.html');
+  fs.readFile(indexPath, 'utf8', (err, html) => {
+    if (err) return res.status(500).send('Server Error');
+    let injectedHtml = html;
+    
+    if (options.title) {
+      injectedHtml = injectedHtml.replace(/<title>.*?<\/title>/i, `<title>${options.title}</title>`);
+      injectedHtml = injectedHtml.replace(/<meta property="og:title" content=".*?">/i, `<meta property="og:title" content="${options.title}">`);
+      injectedHtml = injectedHtml.replace(/<meta name="twitter:title" content=".*?">/i, `<meta name="twitter:title" content="${options.title}">`);
+    }
+    
+    if (options.description) {
+      injectedHtml = injectedHtml.replace(/<meta name="description" content=".*?">/i, `<meta name="description" content="${options.description}">`);
+      injectedHtml = injectedHtml.replace(/<meta property="og:description" content=".*?">/i, `<meta property="og:description" content="${options.description}">`);
+      injectedHtml = injectedHtml.replace(/<meta name="twitter:description" content=".*?">/i, `<meta name="twitter:description" content="${options.description}">`);
+    }
+    
+    if (options.image) {
+      injectedHtml = injectedHtml.replace(/<meta property="og:image" content=".*?">/i, `<meta property="og:image" content="${options.image}">`);
+      injectedHtml = injectedHtml.replace(/<meta name="twitter:image" content=".*?">/i, `<meta name="twitter:image" content="${options.image}">`);
+    }
+    
+    if (options.url) {
+      injectedHtml = injectedHtml.replace(/<meta property="og:url" content=".*?">/i, `<meta property="og:url" content="${options.url}">`);
+    }
+    
+    if (options.hiddenSEOBlock) {
+      injectedHtml = injectedHtml.replace(/<body[^>]*>/i, `$&\\n    <div style="display:none;" id="ssr-seo-data">${options.hiddenSEOBlock}</div>`);
+    }
+    
+    res.send(injectedHtml);
+  });
+}
+
 // Sitemap
-app.get("/sitemap.xml", (req, res) => {
+app.get("/sitemap.xml", async (req, res) => {
+    const { data: plants } = await supabase.from('plants').select('name').eq('avail', true);
+    
+    let urls = `
+  <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/plants</loc><priority>0.9</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/shop</loc><priority>0.9</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/group-arrangements</loc><priority>0.8</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/landscapes</loc><priority>0.8</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/offers</loc><priority>0.8</priority></url>
+  <url><loc>https://www.walktheprimrosepath.com/reviews</loc><priority>0.7</priority></url>`;
+
+    if (plants) {
+      plants.forEach(p => {
+        urls += `\\n  <url><loc>https://www.walktheprimrosepath.com/plants/${slugify(p.name)}</loc><priority>0.8</priority></url>`;
+      });
+    }
+
     res.header("Content-Type", "application/xml");
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/plant/</loc><priority>0.8</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}
 </urlset>`);
 });
 
-// Page Routes
+// Dynamic SEO Routes
+app.get("/plants/:slug", async (req, res) => {
+    const slug = req.params.slug;
+    const { data: plants } = await supabase.from('plants').select('*');
+    if (!plants) return res.sendFile(path.join(__dirname, "index.html"));
+    
+    const plant = plants.find(p => slugify(p.name) === slug);
+    if (!plant) return res.sendFile(path.join(__dirname, "index.html")); // Fallback
+
+    const baseUrl = 'https://www.walktheprimrosepath.com';
+    const imageUrl = plant.img || 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/hero_1920x1080.jpg';
+    
+    servePageWithSEO(res, {
+        title: `${plant.name} | Buy Indoor Plants in Hyderabad | The Primrose Path`,
+        description: `Buy ${plant.name} (${plant.sci || 'Indoor Plant'}) in Hyderabad for ₹${plant.price}. ${plant.care ? plant.care.substring(0, 100) + '...' : 'Premium indoor plants delivered.'}`,
+        url: `${baseUrl}/plants/${slug}`,
+        image: imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`,
+        hiddenSEOBlock: `
+            <h1>${plant.name}</h1>
+            <p>Scientific Name: ${plant.sci}</p>
+            <p>Price: ₹${plant.price}</p>
+            <p>Description & Care: ${plant.care}</p>
+            <p>Type: ${plant.type}, Sun: ${plant.sun}, Water: ${plant.water}</p>
+        `
+    });
+});
+
+// Category Routes
+const categories = {
+  '/shop': { title: 'Shop Plants Online | The Primrose Path', desc: 'Shop premium indoor plants, outdoor plants, and group arrangements in Hyderabad.' },
+  '/plants': { title: 'Indoor & Outdoor Plants | The Primrose Path', desc: 'Browse our collection of beautiful indoor and outdoor plants.' },
+  '/group-arrangements': { title: 'Group Arrangements & Hampers | The Primrose Path', desc: 'Hand-crafted plant group arrangements and hampers.' },
+  '/landscapes': { title: 'Landscape Architecture & Design | The Primrose Path', desc: 'Professional garden design and landscape maintenance services in Hyderabad.' },
+  '/offers': { title: 'Special Offers on Plants | The Primrose Path', desc: 'Check out our latest offers and discounts on indoor plants.' },
+  '/reviews': { title: 'Customer Reviews | The Primrose Path', desc: 'Read what our customers say about our plants and landscaping services.' },
+  '/customers': { title: 'Our Customers | The Primrose Path', desc: 'Institutions and customers we have served across Hyderabad.' }
+};
+
+Object.keys(categories).forEach(route => {
+  app.get(route, (req, res) => {
+    servePageWithSEO(res, {
+      title: categories[route].title,
+      description: categories[route].desc,
+      url: `https://www.walktheprimrosepath.com${route}`
+    });
+  });
+});
+
+// Legacy backward compatibility
+app.get("/plant/:id", (req, res) => res.redirect("/plants"));
+
+// Core App Routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
-app.get("/plant/:id", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 // DEBUG ENDPOINT TO SEE WHAT RENDER SEES
 app.get('/api/debug-env', (req, res) => {
