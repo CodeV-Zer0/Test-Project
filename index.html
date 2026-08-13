@@ -247,6 +247,11 @@ button,input,textarea,select{font-family:inherit}
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius-lg);
   transition:all var(--transition);
 }
+.service-card, .library-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
 .story-card{padding:32px}
 .story-card p{color:var(--text);line-height:1.85;margin-bottom:16px;font-size:15px}
 
@@ -837,7 +842,7 @@ footer a,footer a:visited,footer a:hover,footer a:focus,
       </div>
     </div>
     <div class="service-grid">
-      <div class="service-card reveal reveal-delay-1" style="cursor:pointer" onclick="openArticle('service-landscapes')">
+      <a href="/guide/landscape-gardens" class="service-card reveal reveal-delay-1" onclick="event.preventDefault(); openArticle('service-landscapes')"></a>
         <div class="service-icon"><svg width="28" height="28"><use href="#icon-trees"/></svg></div>
         <h3>Landscape gardens</h3>
         <p>Design, development, and execution of gardens for institutions, offices, residences, and outdoor spaces.</p>
@@ -1214,7 +1219,23 @@ const airPlants = [
   ['Warneckii','Dracaena deremensis warneckei','Known for trichloroethylene and benzene removal. Moderate sun and water needs.'],
   ['Weeping Fig','Ficus benjamina','Removes airborne toxins and increases oxygen levels. Prefers bright light but tolerates shade.']
 ];
-
+// Slug map for service articles
+const serviceSlugs = {
+  'service-landscapes': 'landscape-gardens',
+  'service-indoor': 'indoor-potted-plants',
+  'service-maintenance': 'plant-maintenance',
+  'service-nursery': 'nursery-support',
+  'service-training': 'workforce-training',
+  'service-compliance': 'compliance-focus'
+};
+const idToSlug = { ...serviceSlugs };
+const guideSlugToId = {};
+Object.entries(serviceSlugs).forEach(([id, slug]) => { guideSlugToId[slug] = id; });
+airPlants.forEach((p, i) => {
+  const slug = slugify(p[0]);
+  idToSlug['plant-' + i] = slug;
+  guideSlugToId[slug] = 'plant-' + i;
+});
 // ===== WHATSAPP =====
 function openWhatsApp(msg){ window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank'); }
 
@@ -1496,11 +1517,11 @@ async function submitReview(){
 // ===== PLANT LIBRARY =====
 function renderPlantLibrary(){
   document.getElementById('plant-library').innerHTML = airPlants.map((p, i) => `
-    <div class="library-card reveal" style="cursor:pointer" onclick="openArticle('plant-' + ${i})">
+    <a href="/guide/${slugify(p[0])}" class="library-card reveal" onclick="event.preventDefault(); openArticle('plant-${i}')">
       <h3>${p[0]}</h3>
       <small>${p[1]}</small>
       <p>${p[2]}</p>
-    </div>`).join('');
+    </a>`).join('');
   initRevealAnimations();
 }
 
@@ -2027,7 +2048,8 @@ airPlants.forEach((p, i) => {
 function openArticle(id) {
   const data = articlesData[id];
   if(!data) return;
-  
+  const slug = idToSlug[id] || id;
+  history.pushState({articleId: id}, data.title, '/guide/' + slug);
   // Track which page we came from to handle 'back' correctly
   const activePage = document.querySelector('.page.active');
   if(activePage && activePage.id !== 'page-article') {
@@ -2117,6 +2139,11 @@ document.addEventListener('DOMContentLoaded', function() {
     showPage('customers');
   } else if (path === '/reviews') {
     showPage('reviews');
+  }
+   else if (path.startsWith('/guide/')) {
+    const slug = path.split('/')[2];
+    const id = guideSlugToId[slug];
+    if (id) openArticle(id);
   }
 });
 
