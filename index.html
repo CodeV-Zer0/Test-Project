@@ -2084,22 +2084,24 @@ function renderPaymentPage(){
   // inject payment-specific styles if not present
   if(!document.getElementById('payment-inline-style')){
     const s = document.createElement('style'); s.id = 'payment-inline-style';
+    const isDarkMode = document.documentElement.classList.contains('dark-mode');
+    const cardBg = isDarkMode ? '#0f1713' : '#ffffff';
+    const cardColor = isDarkMode ? '#cfe8d9' : 'var(--text)';
+    const deliveryBg = isDarkMode ? 'rgba(255,255,255,0.03)' : 'var(--bg-muted, #fbfbfb)';
+    const deliveryColor = isDarkMode ? '#cfe8d9' : '#111';
     s.innerHTML = `
       .payment-root { padding:40px 20px; }
-      /* Force a light card appearance and readable text for payment UI */
-      .payment-card { max-width:980px;margin:0 auto;background:var(--white) !important;padding:28px;border-radius:14px;box-shadow:var(--shadow-sm); color:var(--text) !important; }
+      .payment-card { max-width:980px;margin:0 auto;background:${cardBg} !important;padding:28px;border-radius:14px;box-shadow:var(--shadow-sm); color:${cardColor} !important; }
       .payment-grid { display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start; }
       .order-items { background:transparent;padding:6px;border-radius:8px;color:var(--text); }
       .order-row { display:flex;justify-content:space-between;padding:10px 6px;border-bottom:1px dashed var(--line); }
       .order-row .meta { max-width:68%; }
       .breakdown { margin-top:16px;padding-top:10px;border-top:1px solid var(--line);font-weight:700 }
-      .delivery-box { background:var(--bg-muted, #fbfbfb) !important;padding:12px;border-radius:10px;color:var(--text) !important; }
+      .delivery-box { background:${deliveryBg} !important;padding:12px;border-radius:10px;color:${deliveryColor} !important; }
       .payment-actions { display:flex;gap:12px;align-items:center;justify-content:flex-end }
       .btn-pill { padding:12px 22px;border-radius:30px }
       .btn.green { background: linear-gradient(180deg,#2a7a48,#166033) !important; color:#fff !important; box-shadow: 0 6px 18px rgba(22,96,51,0.18); }
       .order-row { border-color: var(--line) !important; }
-      /* Dark mode: make the card darker and page background dark */
-      /* Keep card light by default; dark-mode handling can be enabled later if desired */
     `;
     document.head.appendChild(s);
   }

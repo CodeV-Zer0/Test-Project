@@ -611,7 +611,6 @@ app.get("/sitemap.xml", async (req, res) => {
   <url><loc>https://www.walktheprimrosepath.com/landscapes</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/offers</loc><priority>0.8</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/reviews</loc><priority>0.7</priority></url>
-  <url><loc>https://www.walktheprimrosepath.com/payment</loc><priority>0.9</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/landscape-gardens</loc><priority>0.6</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/indoor-potted-plants</loc><priority>0.6</priority></url>
   <url><loc>https://www.walktheprimrosepath.com/guide/plant-maintenance</loc><priority>0.6</priority></url>
