@@ -62,6 +62,7 @@
 <style>
 /* ===== RESET & DESIGN SYSTEM ===== */
 *{box-sizing:border-box;margin:0;padding:0}
+a { text-decoration: none; color: inherit; }
 :root{
   --ink:#0f1a14;--text:#2a3c30;--muted:#6b7f71;--line:#dce3db;
   --paper:#f8f9f6;--white:#ffffff;
@@ -219,7 +220,7 @@ button,input,textarea,select{font-family:inherit}
 .btn{
   border:0;border-radius:999px;padding:13px 26px;font-size:14px;font-weight:700;
   cursor:pointer;transition:all var(--transition);display:inline-flex;align-items:center;gap:8px;
-  letter-spacing:.3px;
+  letter-spacing:.3px;text-decoration:none;
 }
 .btn.primary{background:#fff;color:#0f1a14;box-shadow:var(--shadow-sm)}
 .btn.primary:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
@@ -382,20 +383,20 @@ button,input,textarea,select{font-family:inherit}
 .detail-stat-val{font-size:14px;color:var(--ink);font-weight:500}
 .detail-care h3{font-family:var(--font-display);margin-bottom:10px;font-size:1.15rem}
 .detail-care p{line-height:1.75;color:var(--text);font-size:14px}
-.detail-purchase-row{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:nowrap}
-.detail-qty-row{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.qty-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);transition:all var(--transition);flex-shrink:0}
+.detail-purchase-row{display:flex;align-items:stretch;gap:12px;margin-top:20px;flex-wrap:wrap}
+.detail-qty-row{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-right:8px}
+.qty-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:18px;font-weight:700;color:var(--ink);transition:all var(--transition);flex-shrink:0}
 .qty-btn:hover{background:var(--leaf-light);border-color:var(--leaf)}
 .detail-action-btn{
-  height:54px;min-height:54px;border-radius:999px;
+  height:50px;border-radius:999px;
   display:inline-flex;align-items:center;justify-content:center;
-  text-align:center;white-space:nowrap;text-decoration:none;
+  text-align:center;white-space:nowrap;font-size:15px;font-weight:700;
+  transition:all var(--transition);
 }
-.detail-add-btn{flex:1 1 220px}
+.detail-add-btn{flex:1 1 50%}
 .wa-order-btn{
-  flex:0 0 235px;margin-top:0;border:0;
-  background:#25d366;color:#fff;font-weight:700;padding:0 22px;cursor:pointer;
-  font-size:15px;transition:all var(--transition);
+  flex:1 1 50%;border:0;
+  background:#25d366;color:#fff;
   box-shadow:0 4px 16px rgba(37,211,102,.25);
 }
 .wa-order-btn:hover{background:#1fb855;transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,211,102,.35)}
@@ -637,9 +638,7 @@ footer a,footer a:visited,footer a:hover,footer a:focus,
   .marquee-item img{max-height:44px;max-width:110px}
 }
 @media(max-width:700px){
-  .detail-purchase-row{flex-wrap:wrap}
   .detail-qty-row{width:100%;justify-content:center}
-  .detail-action-btn{flex:1 1 calc(50% - 5px)}
 }
 @media(max-width:560px){
   .section{padding:36px 16px}
@@ -996,8 +995,10 @@ body.only-payment > *:not(#payment-root):not(.razorpay-container):not([class*="r
             <span id="detail-qty" style="min-width:24px;text-align:center;font-weight:700">1</span>
             <button onclick="changeDetailQty(1)" class="qty-btn">+</button>
           </div>
-          <button class="btn green detail-action-btn detail-add-btn" onclick="addCurrentDetailToCart()">Add to Bag</button>
-          <a href="#" id="detail-wa-btn" class="wa-order-btn detail-action-btn" target="_blank" rel="noopener">💬 Order via WhatsApp</a>
+          <div class="detail-actions-group" style="display:flex;flex:1 1 auto;gap:12px;align-items:stretch">
+            <button class="btn green detail-action-btn detail-add-btn" onclick="addCurrentDetailToCart()">Add to Bag</button>
+            <a href="#" id="detail-wa-btn" class="wa-order-btn detail-action-btn" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+          </div>
         </div>
 
         <!-- RELATED PLANTS -->
@@ -1530,14 +1531,7 @@ function renderPlantLibrary(){
   initRevealAnimations();
 }
 
-// ===== QR SCAN HANDLER =====
-function handleQRScan(){
-  const path = window.location.pathname;
-  if(path.startsWith('/plant/')) showPlant(path.replace('/plant/',''));
-}
-
 renderPlantLibrary();
-handleQRScan();
 
 // ===== CHATBOT =====
 let chatHistory = [];
@@ -2343,18 +2337,25 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // URL Routing Handling
   const path = window.location.pathname;
-  if (path.startsWith('/plants/')) {
+  
+  if (path.startsWith('/plant/') && !path.startsWith('/plants/')) {
+    // Old QR code format: /plant/123
+    const id = path.replace('/plant/', '');
+    if (id) showPlant(id);
+  } else if (path.startsWith('/plants/') && path.length > 8) {
     showPage('plants');
-    // Plant data is either in the hidden SEO block, or we just rely on fetch API to open it by name
     const slug = path.split('/')[2];
-    // Since we don't know the ID, we wait for plants to load and find it
-    const checkPlants = setInterval(() => {
-      if (plants && plants.length > 0) {
-        clearInterval(checkPlants);
-        const p = plants.find(x => slugify(x.name) === slug);
-        if (p) showPlant(p.id);
-      }
-    }, 100);
+    if (slug) {
+      const checkPlants = setInterval(() => {
+        if (plants && plants.length > 0) {
+          clearInterval(checkPlants);
+          const p = plants.find(x => slugify(x.name) === slug);
+          if (p) showPlant(p.id);
+        }
+      }, 100);
+    }
+  } else if (path === '/plants' || path === '/plants/') {
+    showPage('plants');
   } else if (path === '/shop') {
     showPage('shop');
   } else if (path === '/offers') {
@@ -2428,9 +2429,9 @@ showPage = function(name) {
       <div>
         <div class="footer-col-title">Contact</div>
         <div class="footer-contact">
-          <div>📍 <a href="https://www.google.com/maps/search/?api=1&query=Sai+Brundavana+Apartments+202+Dwarakapuri+Colony+Punjagutta+Hyderabad+500082" target="_blank" rel="noopener">Sai Brundavana Apartments, 202, Dwarakapuri colony, Punjagutta, Hyderabad-500082, Telangana</a></div>
-          <div>📞 <a href="tel:+919963334145">+91-9963334145</a> / <a href="tel:+919959667133">9959667133</a></div>
-          <div>📧 <a href="mailto:theprimrose@gmail.com">theprimrose@gmail.com</a> 
+          <div>📍 <a href="https://www.google.com/maps/search/?api=1&query=Sai+Brundavana+Apartments+202+Dwarakapuri+Colony+Punjagutta+Hyderabad+500082" target="_blank" rel="noopener noreferrer">Sai Brundavana Apartments, 202, Dwarakapuri colony, Punjagutta, Hyderabad-500082, Telangana</a></div>
+          <div>📞 <a href="tel:+919963334145" target="_blank" rel="noopener noreferrer">+91-9963334145</a> / <a href="tel:+919959667133" target="_blank" rel="noopener noreferrer">9959667133</a></div>
+          <div>📧 <a href="mailto:theprimrose@gmail.com" target="_blank" rel="noopener noreferrer">theprimrose@gmail.com</a> 
   <button onclick="navigator.clipboard.writeText('theprimrose@gmail.com'); this.textContent='Copied!'; setTimeout(()=>this.textContent='📋',1500)" style="background:none;border:none;color:inherit;cursor:pointer;font-size:12px;vertical-align:middle;opacity:.7" title="Copy email">📋</button>
           </div>
           <div>🕐 Mon – Sat: 9:00 am – 6:00 pm</div>
