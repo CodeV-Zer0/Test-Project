@@ -732,7 +732,12 @@ app.get("/guide/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 // Legacy backward compatibility
-app.get("/plant/:id", (req, res) => res.redirect("/plants"));
+// Legacy backward compatibility: old QR codes used /plant/:id
+app.get("/plant/:id", async (req, res) => {
+    const { data: plant } = await supabase.from('plants').select('id,name').eq('id', req.params.id).single();
+    if (!plant) return res.redirect('/plants');
+    res.redirect(`/plants/${slugify(plant.name)}-${plant.id}`);
+});
 
 // Core App Routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
