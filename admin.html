@@ -658,7 +658,8 @@ function slugify(text) {
 }
 
 function generateQR(id,name){
-  const url = window.location.origin + '/plants/' + slugify(name);
+  const slug = slugify(name) + '-' + id;
+  const url = window.location.origin + '/plants/' + slug;
   const win=window.open('','_blank','width=380,height=520');
   win.document.write(`<html><head><title>QR - ${name}</title>
     <style>@media print{.no-print{display:none!important}}</style>

@@ -601,7 +601,7 @@ async function servePageWithSEO(res, options) {
 // Sitemap
 // Sitemap
 app.get("/sitemap.xml", async (req, res) => {
-    const { data: plants } = await supabase.from('plants').select('name');
+    const { data: plants } = await supabase.from('plants').select('id,name');
     
     let urls = `
   <url><loc>https://www.walktheprimrosepath.com/</loc><priority>1.0</priority></url>
@@ -636,7 +636,7 @@ app.get("/sitemap.xml", async (req, res) => {
     if (plants) {
       plants.forEach(p => {
         urls += `
-  <url><loc>https://www.walktheprimrosepath.com/plants/${slugify(p.name)}</loc><priority>0.8</priority></url>`;
+  <url><loc>https://www.walktheprimrosepath.com/plants/${slugify(p.name)}-${p.id}</loc><priority>0.8</priority></url>`;
       });
     }
 
@@ -647,21 +647,28 @@ app.get("/sitemap.xml", async (req, res) => {
 });
 
 // Dynamic SEO Routes
+function plantSlug(plant) {
+  return `${slugify(plant.name)}-${plant.id}`;
+}
+
 app.get("/plants/:slug", async (req, res) => {
     const slug = req.params.slug;
+    const idMatch = slug.match(/-(\d+)$/); // pull trailing id
     const { data: plants } = await supabase.from('plants').select('*');
     if (!plants) return res.sendFile(path.join(__dirname, "index.html"));
-    
-    const plant = plants.find(p => slugify(p.name) === slug);
-    if (!plant) return res.sendFile(path.join(__dirname, "index.html")); // Fallback
 
+    let plant = idMatch ? plants.find(p => String(p.id) === idMatch[1]) : null;
+    if (!plant) plant = plants.find(p => slugify(p.name) === slug); // backward-compat for old QRs
+    if (!plant) return res.redirect('/plants'); // explicit redirect, not a silent fallback
+
+    const canonicalSlug = plantSlug(plant);
     const baseUrl = 'https://www.walktheprimrosepath.com';
     const imageUrl = plant.img || 'https://rfnfoddjvbuojadwsjyx.supabase.co/storage/v1/object/public/uploads/company-assets/hero_1920x1080.jpg';
-    
+
     servePageWithSEO(res, {
         title: `${plant.name} | Buy Indoor Plants in Hyderabad | The Primrose Path`,
         description: `Buy ${plant.name} (${plant.sci || 'Indoor Plant'}) in Hyderabad for ₹${plant.price}. ${plant.care ? plant.care.substring(0, 100) + '...' : 'Premium indoor plants delivered.'}`,
-        url: `${baseUrl}/plants/${slug}`,
+        url: `${baseUrl}/plants/${canonicalSlug}`,
         image: imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`,
         hiddenSEOBlock: `
             <h1>${plant.name}</h1>

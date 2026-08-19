@@ -1334,7 +1334,7 @@ function slugify(text) {
 
 function plantCardHTML(p){
   return `
-    <a href="/plants/${slugify(p.name)}" class="plant-card" style="text-decoration:none;color:inherit;">
+    <a href="/plants/${slugify(p.name)}-${p.id}" class="plant-card" style="text-decoration:none;color:inherit;">
       <div class="plant-card-img">${p.photo ? `<img src="${p.photo}" alt="${p.name}" class="zoomable" loading="lazy">` : `<div class="no-photo">🌿</div>`}</div>
       <div class="plant-card-body">
         <div class="plant-card-name">${p.name}</div>
@@ -1399,7 +1399,7 @@ async function showPlant(id){
     document.getElementById('detail-qty').textContent = detailQty;
 
     // Update URL without reload
-    const plantSlug = slugify(p.name);
+    const plantSlug = slugify(p.name)+ '-' + p.id;
     history.pushState({plantId: p.id}, p.name, '/plants/' + plantSlug);
 
     // Breadcrumb
@@ -1434,7 +1434,7 @@ async function showPlant(id){
       const related = plants.filter(x => x.id !== p.id && x.type && x.type === p.type).slice(0, 5);
       if (related.length > 0) {
         relatedGrid.innerHTML = related.map(r => `
-          <a href="/plants/${slugify(r.name)}" style="display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;min-width:90px;max-width:110px;text-align:center;">
+          <a href="/plants/${slugify(r.name)}-${r.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;min-width:90px;max-width:110px;text-align:center;">
             ${r.photo ? `<img src="${r.photo}" alt="${r.name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:24px">🌿</div>'}
             <span style="font-size:11px;font-weight:600;line-height:1.3;">${r.name}</span>
             <span style="font-size:11px;color:var(--leaf);">₹${r.price || '-'}</span>
@@ -2096,6 +2096,13 @@ function renderPaymentPage(){
       .btn-pill { padding:12px 22px;border-radius:30px }
       .btn.green { background: linear-gradient(180deg,#2a7a48,#166033) !important; color:#fff !important; box-shadow: 0 6px 18px rgba(22,96,51,0.18); }
       .order-row { border-color: var(--line) !important; }
+      @media(max-width:700px){
+        .payment-grid{grid-template-columns:1fr !important;gap:18px !important;}
+        .payment-card{padding:18px !important;}
+        .delivery-box{font-size:13px;word-break:break-word;}
+        .payment-actions{justify-content:stretch !important;}
+        .payment-actions button{flex:1}
+      }
     `;
     document.head.appendChild(s);
   }
@@ -2346,15 +2353,17 @@ document.addEventListener('DOMContentLoaded', function() {
     showPage('plants');
     const slug = path.split('/')[2];
     if (slug) {
+      const idMatch = slug.match(/-(\d+)$/);
       const checkPlants = setInterval(() => {
         if (plants && plants.length > 0) {
-          clearInterval(checkPlants);
-          const p = plants.find(x => slugify(x.name) === slug);
+       clearInterval(checkPlants);
+          let p = idMatch ? plants.find(x => String(x.id) === idMatch[1]) : null;
+          if (!p) p = plants.find(x => slugify(x.name) === slug);
           if (p) showPlant(p.id);
         }
       }, 100);
     }
-  } else if (path === '/plants' || path === '/plants/') {
+} else if (path === '/plants' || path === '/plants/') {
     showPage('plants');
   } else if (path === '/shop') {
     showPage('shop');
